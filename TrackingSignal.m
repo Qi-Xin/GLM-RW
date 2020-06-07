@@ -4,8 +4,8 @@ tau_E = 1e-3;           % 1ms
 tau_I = tau_E;
 tau_M = 20;
 dt = 1;
-p = 1e4;
-q = 1e4;
+p = 5e1;
+q = 5e1;
 %{
 p = 5e1;
 q = 5e1;
@@ -17,7 +17,7 @@ p = 1e4;
 q = 1e4;
 %}
 
-tot_t = 1e7;
+tot_t = 1e6;
 bin = 1;   %ms
 ddt = bin;
 V_E = 0.023;
