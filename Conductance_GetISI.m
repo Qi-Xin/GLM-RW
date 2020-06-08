@@ -1,4 +1,4 @@
-function [ISI,spike_timing,y,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt)
+function [ISI,spike_timing,y,V,inputE,inputI] = Conductance_GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt)
 
 V = NaN*zeros(1,tot_t);
 V(1) = 0; 
@@ -11,7 +11,6 @@ rdmI = random('poisson',q,1,tot_t+add);
 inputE = zeros(1,tot_t + add);
 inputI = zeros(1,tot_t + add);
 
-LB = -0.1;
 for t = 2:( tot_t + add )
 	inputE(t) = inputE(t-1)*exp(-dt/tau_E);
     inputI(t) = inputI(t-1)*exp(-dt/tau_I);
@@ -29,11 +28,7 @@ for t = 2:tot_t
     end
     
     V(t) = V(t-1)*exp(-dt/tau_M);
-    V(t) = V(t) + inputE(t) - inputI(t) + I(t);
-    
-    if V(t)<= LB
-        V(t) = LB;
-    end
+    V(t) = V(t) + inputE(t) - inputI(t)*(V(t)+0.5)/1 + I(t);
     
 end
 

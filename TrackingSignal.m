@@ -27,11 +27,23 @@ adjValue = 50;
 V_th = 1;
 V_reset = 0;
 
-maxSig = 0.8e-1;
-signalType = 2; % 1 for no signal, 2 for square wave, 3 for gamma
+maxSig = 0.9e-1;
+signalType = 1; % 1 for no signal, 2 for square wave, 3 for gamma
 I_per = zeros(1,1e3);
 if signalType == 2
-    I_per(301:410) = 1;
+    %I_per(301:410) = 1;
+    I_per(1:1000) = 1;
+    %{
+    I_per(101:110) = 0.1;
+    I_per(201:210) = 0.2;
+    I_per(301:310) = 0.3;
+    I_per(401:410) = 0.4;
+    I_per(501:510) = 0.5;
+    I_per(601:610) = 0.6;
+    I_per(701:710) = 0.7;
+    I_per(801:810) = 0.8;
+    I_per(901:910) = 0.9;
+    %}
     I_per = I_per/max(I_per)*maxSig;
 end
 if signalType == 3

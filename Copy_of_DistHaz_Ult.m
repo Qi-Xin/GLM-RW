@@ -2,19 +2,19 @@ clearvars;
 
 tau_E = 1e-3;           % 1ms
 tau_I = tau_E;
-tau_M = 1e7;
+tau_M = 20;
 dt = 1;
-p = 0.8e0;
-q = 0.4e0;
+p = 5e1;
+q = 5e1;
 
 bin = 2;   %ms
 %V_E = 1*(1-exp(-dt/tau_E));
-%V_E = 0.023;
-V_E = 0.1;
+V_E = 0.023;
+%V_E = 0.1;
 V_I = V_E;
 adjStepOrNot = 0;
 adjValue = 20;        % 0.1ms
-tot_t = 1e7;
+tot_t = 1e6;
 tot_N = 1e4;
 V_th = 1;
 V_reset = 0;

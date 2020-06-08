@@ -4,15 +4,15 @@ tau_E = 1e-3;           % 1ms
 tau_I = tau_E;
 tau_M = 20;
 dt = 1;
-p = 5e1;
-q = 5e1;
+p = 10e-1;
+q = 8e-1;
 
 bin = 5;   %ms
 %V_E = 1*(1-exp(-dt/tau_E));
-V_E = 0.023;
+V_E = 0.1;
 %V_E = 0.1;
 V_I = V_E;
-adjStepOrNot = 1;
+adjStepOrNot = 0;
 adjValue = 50;        % 0.1ms
 tot_t = 1e6;
 tot_N = 1e4;
@@ -105,8 +105,35 @@ if adjStepOrNot == 1
     V_I = result_x*V_I;
 end
 %% Simulation
+[ISI_condu,spike_timing_condu,y_sparse,V_condu,inputE,inputI] = Conductance_GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
+y = full(y_sparse);
 [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
 y = full(y_sparse);
+
+figure
+hold on
+ddt = 10;
+max1 = 500;
+h = histogram(ISI_condu,0:ddt:max1,'Normalization','pdf');
+h = histogram(ISI,0:ddt:max1,'Normalization','pdf');
+xlim([0 300]);
+legend('Conductance','RW');
+mean(ISI_condu)
+mean(ISI)
+
+BumpCenter_condu = zeros(1,50);
+spike_timing_condu = spike_timing_condu(2:end-1);
+BumpCenter = zeros(1,50);
+spike_timing = spike_timing(2:end-1);
+for duration = 1:1:50
+    BumpCenter_condu(duration) = mean(V_condu(spike_timing_condu + duration));
+    BumpCenter(duration) = mean(V(spike_timing + duration));
+end
+figure
+hold on
+plot(1:50,BumpCenter_condu);
+plot(1:50,BumpCenter);
+legend('Conductance','RW');
 %% 
 ddt = bin;
 max1 = ceil(max(ISI));

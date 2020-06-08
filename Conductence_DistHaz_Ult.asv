@@ -12,7 +12,7 @@ bin = 5;   %ms
 V_E = 0.023;
 %V_E = 0.1;
 V_I = V_E;
-adjStepOrNot = 1;
+adjStepOrNot = 0;
 adjValue = 50;        % 0.1ms
 tot_t = 1e6;
 tot_N = 1e4;
@@ -105,8 +105,24 @@ if adjStepOrNot == 1
     V_I = result_x*V_I;
 end
 %% Simulation
+[ISI_condu,spike_timing_condu,y_sparse,V_condu,inputE,inputI] = Conductance_GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
+y = full(y_sparse);
 [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
 y = full(y_sparse);
+
+figure
+hold on
+ddt = 10;
+max1 = 500;
+h = histogram(ISI_condu,0:ddt:max1,'Normalization','pdf');
+h = histogram(ISI,0:ddt:max1,'Normalization','pdf');
+xlim([0 300]);
+legend('Conductance','RW');
+mean(ISI_condu)
+mean(ISI)
+
+for duration = 0:1:50
+    
 %% 
 ddt = bin;
 max1 = ceil(max(ISI));
