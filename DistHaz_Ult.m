@@ -1,11 +1,11 @@
 clearvars;
 
-tau_E = 1e-3;           % 1ms
+tau_E = 100;           % 1ms
 tau_I = tau_E;
-tau_M = 20;
+tau_M = 10;
 dt = 1;
-p = 5e1;
-q = 5e1;
+p = 6e-1;
+q = 3e-1;
 
 bin = 5;   %ms
 %V_E = 1*(1-exp(-dt/tau_E));
@@ -161,7 +161,7 @@ axis([0 200 0 1]);
 %}
 
 %% Plot Raster
-T = 1e3;
+T = 1e4;
 N = 10;
 %{
 figure
@@ -189,7 +189,7 @@ subplot(6,1,6);
 plotraster(reshape(y_sparse(1:1*T),[],1)',1:T,'Spike train');
 title('Spike train');
 
-%% Fit GLM with no input and no input filter
+%% Fit Pillow GLM 
 T = tot_t;
 %T = 1e6;
 y_glm = y(1,1:T);
@@ -222,10 +222,36 @@ kbasprs.ncos = 5; % number of raised-cosine vectors to use
 kbasprs.kpeaks = [1 round(nkt/1.2)];  % position of first and last bump (relative to identity bumps)
 kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
 %%% basis functions for post-spike kernel
-ihbasprs.ncols = 20;  % number of basis vectors for post-spike kernel
+ihbasprs.ncols = 15;  % number of basis vectors for post-spike kernel
 hPeaksMax = 100;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
 ihbasprs.absref = 0; % absolute refractory period, in ms
 
 [k, h, dc, prs, kbasis, hbasis , stats] = fit_hazard(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+
+%% Fit FNL GLM 
+NumSP = 3;
+T = tot_t;
+%T = 1e6;
+y_glm = y(1,1:T);
+
+nkt = 100; % number of ms in stim filter
+kbasprs.neye = 0; % number of "identity" basis vectors near time of spike;
+kbasprs.ncos = 5; % number of raised-cosine vectors to use
+kbasprs.kpeaks = [1 round(nkt/1.5)];  % position of first and last bump (relative to identity bumps)
+kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
+%%% basis functions for post-spike kernel
+ihbasprs.ncols = 5;  % number of basis vectors for post-spike kernel
+hPeaksMax = 70;
+ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
+ihbasprs.b = 1*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
+ihbasprs.absref = 0; % absolute refractory period, in ms
+
+fit_k = 1;
+if max(I) == 0
+    fit_k = 0;
+end
+plotFlag = 1;    % plot fit
+
+[k, h, dc, prs, kbasis, hbasis, stats] = fit_FNL(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag,NumSP,ISI);
