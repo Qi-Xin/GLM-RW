@@ -39,8 +39,9 @@ I = repmat(I_per,1,repnum);
 I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
 
-I_record = maxSig*random('poisson',I,1,tot_t);
+I_record = random('poisson',I,1,tot_t);
 I_record(find(I_record>=2)) = 1;
+I_record = maxSig*I_record;
 %I = zeros(T,1);
 
 %{
@@ -165,7 +166,7 @@ axis([0 200 0 1]);
 %}
 
 %% Plot Raster
-T = 1e4;
+T = 3e3;
 N = 10;
 %{
 figure
@@ -189,8 +190,7 @@ ylim([0 1e-1]);
 subplot(6,1,5);
 plot(1e-4*(1:T),V(1:T));
 xlabel('t/s');
-ylabel('Voltage');
-title('Voltage');
+ylabel('Voltage');title('Voltage');
 subplot(6,1,6);
 plotraster(reshape(y_sparse(1:1*T),[],1)',1:T,'Spike train');
 title('Spike train');
@@ -263,7 +263,7 @@ kbasprs.ncos = 5; % number of raised-cosine vectors to use
 kbasprs.kpeaks = [1 round(nkt/1.5)];  % position of first and last bump (relative to identity bumps)
 kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
 %%% basis functions for post-spike kernel
-ihbasprs.ncols = 10;  % number of basis vectors for post-spike kernel
+ihbasprs.ncols = 5;  % number of basis vectors for post-spike kernel
 hPeaksMax = 100;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
@@ -287,7 +287,7 @@ kbasprs.ncos = 5; % number of raised-cosine vectors to use
 kbasprs.kpeaks = [1 round(nkt/1.5)];  % position of first and last bump (relative to identity bumps)
 kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
 %%% basis functions for post-spike kernel
-ihbasprs.ncols = 10;  % number of basis vectors for post-spike kernel
+ihbasprs.ncols = 5;  % number of basis vectors for post-spike kernel
 hPeaksMax = 100;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
