@@ -275,7 +275,7 @@ if max(I) == 0
 end
 plotFlag = 1;    % plot fit
 
-[k, h, ~, prs, kbasis, hbasis, stats] = fit_glm(I_record',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+[kn, h, dc, prs, kbasis, hbasis, stats] = fit_glm(I_record',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
 %% Fit Pillow GLM (Population) 
 T = tot_t;
 %T = 1e6;
@@ -299,12 +299,15 @@ if max(I) == 0
 end
 plotFlag = 1;    % plot fit
 
-[k, h, dc, prs, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
-
-k_inv = flipud(k);
-for i = 1:1e2
-    intk(i) = sum(k_inv(1:i));
-end
+[kp, h, dc, prs, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+%%
+T=1e4;
+outn=sameconv(I_record',flipud(kn));
+outp=sameconv(I',flipud(kp));
+figure
+hold on
+plot(1:T,outn(1:T));
+plot(1:T,outp(1:T))
 %% Fit Hazard
 %{
 

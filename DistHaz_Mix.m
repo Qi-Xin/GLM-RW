@@ -161,7 +161,7 @@ axis([0 200 0 1]);
 %}
 
 %% Plot Raster
-T = 1e4;
+T = 3e3;
 N = 10;
 %{
 figure
