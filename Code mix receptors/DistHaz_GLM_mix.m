@@ -2,10 +2,11 @@ clearvars;
 
 %tau_E_range = [1,5,10,20,50,100,200,500];
 %tau_M_range = [10,25,50,100];
-ratio_range = [1 0.75 0.5 0.25 0];
+%ratio_range = [1 0.75 0.5 0.25 0];
+ratio_range = 0.2;
 tau_E1 = 5;
-tau_E2 = 200;
-tau_M = 25;
+tau_E2 = 67;
+tau_M = 20;
 adjStepOrNot = 1;
 adjValue = 10*50;
 hazard_rcd = cell(length(ratio_range),1);
