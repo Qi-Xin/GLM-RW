@@ -14,7 +14,7 @@ k_output = zeros(Ntrials,T);
 for i = 1:Ntrials
     rate(i,1)=exp(bias);
     h_output(i,:) = sameconv(y(i,:)',h');
-    k_output(i,:) = sameconvSti(I(i,:)',k');
+    k_output(i,:) = sameconvSti(I(i,:)',flipud(k'));
     rate(i,:) = exp( h_output(i,:) + k_output(i,:) + bias );
     sp = find(y(i,:)_== 1);
     z = [z,sum(rate(i,1:sp(1)))];
