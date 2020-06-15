@@ -114,7 +114,7 @@ xconvki = zeros(size(y,1),nkbasis);
 yconvhi = zeros(size(y,1),NumSP*nhbasis);
 
 for knum = 1:nkbasis
-    xconvki(:,knum) = sameconv(x,flipud(kbasis(:,knum)));
+    xconvki(:,knum) = sameconvSti(x,flipud(kbasis(:,knum)));
 end
 
 for i = 1:NumSP
@@ -144,9 +144,9 @@ if fit_k == 1
         h{i} = hbasis*prs(nkbasis+(i-1)*nhbasis+2:nkbasis+i*nhbasis+1); % k basis functions weighted by given parameters
         hL{i} = hbasis*prsL(nkbasis+(i-1)*nhbasis+2:nkbasis+i*nhbasis+1);
         hU{i} = hbasis*prsU(nkbasis+(i-1)*nhbasis+2:nkbasis+i*nhbasis+1);
-        h{i} = h{i}(2:end);
-        hL{i} = hL{i}(2:end);
-        hU{i} = hU{i}(2:end);
+        h{i} = h{i}(1:end);
+        hL{i} = hL{i}(1:end);
+        hU{i} = hU{i}(1:end);
     end
 else
     k = kbasis*zeros(nkbasis,1);
@@ -156,9 +156,9 @@ else
         h{i} = hbasis*prs((i-1)*nhbasis+2:i*nhbasis+1); % k basis functions weighted by given parameters
         hL{i} = hbasis*prsL((i-1)*nhbasis+2:i*nhbasis+1);
         hU{i} = hbasis*prsU((i-1)*nhbasis+2:i*nhbasis+1);
-        h{i} = h{i}(2:end);
-        hL{i} = hL{i}(2:end);
-        hU{i} = hU{i}(2:end);
+        h{i} = h{i}(1:end);
+        hL{i} = hL{i}(1:end);
+        hU{i} = hU{i}(1:end);
     end
 end
 dc = prs(1); % dc current (accounts for mean spike rate)

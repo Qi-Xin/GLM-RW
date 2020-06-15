@@ -114,7 +114,7 @@ xconvki = zeros(size(y,1),nkbasis);
 yconvhi = zeros(size(y,1),nhbasis);
 
 for knum = 1:nkbasis
-    xconvki(:,knum) = sameconv(x,flipud(kbasis(:,knum)));
+    xconvki(:,knum) = sameconvSti(x,flipud(kbasis(:,knum)));
 end
 
 for hnum = 1:nhbasis

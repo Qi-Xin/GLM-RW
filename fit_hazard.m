@@ -114,7 +114,7 @@ xconvki = zeros(size(y,1),nkbasis);
 yconvhi = zeros(size(y,1),nhbasis);
 
 for knum = 1:nkbasis
-    xconvki(:,knum) = sameconv(x,kbasis(:,knum));
+    xconvki(:,knum) = sameconvSti(x,kbasis(:,knum));
 end
 
 for hnum = 1:nhbasis
@@ -152,9 +152,9 @@ dc = prs(1); % dc current (accounts for mean spike rate)
 dcL = prsL(1);
 dcU = prsU(1);
 
-h = h(2:end)+dc;
-hL = hL(2:end)+dcL;
-hU = hU(2:end)+dcU;
+h = h(1:end)+dc;
+hL = hL(1:end)+dcL;
+hU = hU(1:end)+dcU;
 kLU = [kL,kU];
 hLU = [hL,hU];
 %% plot results

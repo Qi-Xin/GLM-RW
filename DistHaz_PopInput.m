@@ -275,7 +275,7 @@ if max(I) == 0
 end
 plotFlag = 1;    % plot fit
 
-[kn, h, dc, prs, kbasis, hbasis, stats] = fit_glm(I_record',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+[kn, hn, dcn, prs, kbasis, hbasis, stats] = fit_glm(I_record',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
 %% Fit Pillow GLM (Population) 
 T = tot_t;
 %T = 1e6;
@@ -299,8 +299,9 @@ if max(I) == 0
 end
 plotFlag = 1;    % plot fit
 
-[kp, h, dc, prs, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
-%%
+[kp, hp, dcp, prs, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+KStest(y_glm, hp', I, kp', dcp, 1);
+%% Plot Output
 T=1e4;
 outn=sameconv(I_record',flipud(kn));
 outp=sameconv(I',flipud(kp));

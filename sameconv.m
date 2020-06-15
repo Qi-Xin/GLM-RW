@@ -5,7 +5,7 @@ function G = sameconv(A, B)
 %  A.  (B not flipped as in standard convolution).
 %
 %  Convolution performed efficiently in (zero-padded) Fourier domain.
-
+B = [0;B];
 
 [am, an] = size(A);
 [bm, bn] = size(B);
