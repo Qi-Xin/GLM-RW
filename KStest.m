@@ -1,4 +1,4 @@
-function [pvalue, rate, h_output, k_output] = KStest(y, h, I, k, bias, PlotFlag, )
+function [pvalue, rate, h_output, k_output] = KStest(y, h, I, k, bias, PlotFlag)
 % Plot KS test
 
 [Ntrials,T] = size(y);
@@ -16,9 +16,9 @@ for i = 1:Ntrials
     h_output(i,:) = sameconv(y(i,:)',h');
     k_output(i,:) = sameconvSti(I(i,:)',flipud(k'));
     rate(i,:) = exp( h_output(i,:) + k_output(i,:) + bias );
-    sp = find(y(i,:)_== 1);
+    sp = find(y(i,:) == 1);
     z = [z,sum(rate(i,1:sp(1)))];
-    for j = 2:totalspikes(i)
+    for j = 2:length(sp)
         z = [z,sum(rate( i , (sp(j-1)+1) : sp(j) ))];
     end
 	
@@ -40,7 +40,12 @@ if PlotFlag==1
 end
 
 test_cdf = makedist('exp', 'mu', 1);
-[h, p] = kstest(z, 'CDF', test_cdf)
+[h, pvalue] = kstest(z, 'CDF', test_cdf);
+
+figure;
+histogram(z,0:0.1:10,'Normalization','pdf');
+xlim([0 10]);
+
 
 end
 

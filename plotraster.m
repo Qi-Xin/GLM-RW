@@ -4,7 +4,7 @@ for trialCount = 1:size(spikeMat,1)
     spikePos = tVec(find(spikeMat(trialCount, :)));
     for spikeCount = 1:length(spikePos)
         plot([spikePos(spikeCount) spikePos(spikeCount)], ...
-            [trialCount-0.4-0.5 trialCount+0.4-0.5], 'k');
+            [trialCount-0.4-0.5 trialCount+0.4-0.5], 'k-','HandleVisibility','off');
     end
 end
 ylim([0 size(spikeMat, 1)+1]);
