@@ -10,7 +10,11 @@ z = [];
 rate = zeros(Ntrials,T);
 h_output = zeros(Ntrials,T);
 k_output = zeros(Ntrials,T);
-
+%{
+ISI_rcd = [];
+sp_start_rcd = [];
+sp_end_rcd = [];
+%}
 for i = 1:Ntrials
     rate(i,1)=exp(bias);
     h_output(i,:) = sameconv(y(i,:)',h');
@@ -18,8 +22,17 @@ for i = 1:Ntrials
     rate(i,:) = exp( h_output(i,:) + k_output(i,:) + bias );
     sp = find(y(i,:) == 1);
     z = [z,sum(rate(i,1:sp(1)))];
+    
     for j = 2:length(sp)
-        z = [z,sum(rate( i , (sp(j-1)+1) : sp(j) ))];
+        new_z = sum(rate( i , (sp(j-1)+1) : sp(j) ));
+        %{
+        if new_z>0.6 & new_z<0.9
+            ISI_rcd = [ISI_rcd,sp(j)-(sp(j-1)+1)];
+            sp_start_rcd = [sp_start_rcd,(sp(j-1)+1)];
+            sp_end_rcd = [sp_end_rcd,sp(j)];
+        end
+        %}
+        z = [z,new_z];
     end
 	
 end
@@ -43,6 +56,10 @@ test_cdf = makedist('exp', 'mu', 1);
 [h, pvalue] = kstest(z, 'CDF', test_cdf);
 
 figure;
+hold on
+theta = mean(z);
+xx = 0:1e-2:10;
+plot(xx,1/theta*exp(-xx./theta));
 histogram(z,0:0.1:10,'Normalization','pdf');
 xlim([0 10]);
 
