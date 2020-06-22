@@ -1,5 +1,6 @@
 clearvars;
 
+addpath(genpath('D:/code'))
 tot_t = 1e6;
 %tot_N = 1e4;
 V_th = 1;
@@ -24,10 +25,10 @@ I = repmat(I_per,1,repnum);
 I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
 
-e_range = logspace(-1,2,10);
+e_range = logspace(0,1.7782,10);
 mask_range = [0,10];
-V_E = 0.1;
-V_I = 0.1;
+V_E = 1;
+V_I = 0.5;
 tau_M = 20;
 tau_E = 1e-5;
 tau_I = 1e-5;
@@ -36,32 +37,23 @@ adjStepOrNot = 0;
 adjValue = 50;
 le = length(e_range);
 lm = length(mask_range);
-hazard_rcd = cell(le,lm);
-history_rcd = cell(le,lm);
-stimulus_rcd = cell(le,lm);
-hazardLU_rcd = cell(le,lm);
-historyLU_rcd = cell(le,lm);
-stimulusLU_rcd = cell(le,lm);
-bias_rcd = cell(le,lm);
-biasLU_rcd = cell(le,lm);
 y_rcd = cell(le,lm);
 y_sparse_rcd = cell(le,lm);
 ISI_rcd = cell(le,lm);
 spike_timing_rcd = cell(le,lm);
 mean_rcd = NaN*zeros(le,lm);
 cv_rcd = NaN*zeros(le,lm);
+fr = NaN*zeros(le,lm);
 
 for i = 1:(le)
     for j = 1:(lm)
         [i,j]
         
         p = e_range(i);
-        q = e_range(i) + mask_range(j);
-        % Simulation
-        [ISI_rcd{i,j},spike_timing_rcd{i,j},y_sparse_rcd{i,j}] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
-        mean_rcd(i,j) = mean(ISI_rcd{i,j});
-        cv_rcd(i,j) = std(ISI_rcd{i,j})/mean_rcd(i,j);
-        y_rcd{i,j} = full(y_sparse_rcd{i,j});
+        q = e_range(i)+mask_range(j);
+        [~,~,~,~,Ie,Ii] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,1e4,dt);
+        fr(i,j) = hhrun(Ie-Ii, 1e4, -65, 0.5, 0.06, 0.5, 0)/10;
+        
         %{
         if signalType ~= 1
             % GLM
@@ -112,13 +104,35 @@ for i = 1:(le)
         %}
     end
 end
-fr = 1e3./mean_rcd;
+
+xdata = e_range;
+ydata = fr(:,1)';
+r = @(k,xdata) k(1)./(k(2)+1./exp(k(3).*log(xdata)));
+k0 = [100,5,5];
+kfit1 = lsqcurvefit(r,k0,xdata,ydata);
+XX = 0:1e-1:70;
+YY1 = r(kfit1,XX);
+%  5.2930    0.0497    1.2600
+
+xdata = e_range;
+ydata = fr(:,2)';
+r = @(k,xdata) k(1)./(k(2)+1./exp(k(3).*log(xdata)));
+k0 = [100,5,5];
+kfit2 = lsqcurvefit(r,k0,xdata,ydata);
+XX = 0:1e-1:70;
+YY2 = r(kfit2,XX);
+% 1.1790    0.0113    1.5953
 
 figure;
-semilogx(e_range,fr(:,1)',e_range,fr(:,2)');
+hold on
+plot(e_range,fr(:,1)',e_range,fr(:,2)');
+plot(XX,YY1);
+plot(XX,YY2);
 legend('mask off','mask on');
 xlabel('Input Firing Rate');
 ylabel('Response Firing Rate');
+
+
 %% Plot filter & hazard function
 figure
 nn = 0;

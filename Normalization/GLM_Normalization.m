@@ -1,6 +1,6 @@
 clearvars;
 
-tot_t = 1e6;
+tot_t = 2e6;
 %tot_N = 1e4;
 V_th = 1;
 V_reset = 0;
@@ -24,13 +24,13 @@ I = repmat(I_per,1,repnum);
 I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
 
-e_range = logspace(-1,1,10);
+e_range = linspace(1e-1,1.5e1,10);
 mask_range = [0,1];
-V_E = 0.1;
-V_I = 0.1;
+V_E = 1.5e-1;
+V_I = 1e-1;
 tau_M = 20;
-tau_E = 1e-5;
-tau_I = 1e-5;
+tau_E = 10;
+tau_I = 10;
 
 adjStepOrNot = 0;
 adjValue = 50;
@@ -51,17 +51,36 @@ spike_timing_rcd = cell(le,lm);
 mean_rcd = NaN*zeros(le,lm);
 cv_rcd = NaN*zeros(le,lm);
 
+rateBias = -3;
+w = -20*exp(-(1:50)/3);
+w = [-20*ones(1,20),w];
+simulationtimes = 1;
+T = 1e5;
+nHistBins = numel(w);
 for i = 1:(le)
     for j = 1:(lm)
         [i,j]
         
         p = e_range(i);
         q = e_range(i) + mask_range(j);
-        % Simulation
-        [ISI_rcd{i,j},spike_timing_rcd{i,j},y_sparse_rcd{i,j}] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
-        mean_rcd(i,j) = mean(ISI_rcd{i,j});
-        cv_rcd(i,j) = std(ISI_rcd{i,j})/mean_rcd(i,j);
-        y_rcd{i,j} = full(y_sparse_rcd{i,j});
+        
+        [~,~,~,~,Ie,Ii] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,T+nHistBins,dt);
+        
+        y = zeros(simulationtimes , T + nHistBins);
+        for NSimTrial=1:simulationtimes
+            for t = (nHistBins+1):(T+nHistBins)
+                yy = poissrnd(exp(w * (y(NSimTrial,t - (1:nHistBins)))' + rateBias + Ie(t)-Ii(t)));
+                if yy ~= 0
+                    y(NSimTrial,t) = 1;
+                end
+            end
+
+        end
+        y = y(:,nHistBins+1:end);
+        fr(i,j) = sum(y)/T*1e3;
+    end
+end
+        
         %{
         if signalType ~= 1
             % GLM
@@ -110,82 +129,34 @@ for i = 1:(le)
             hazardLU_rcd{i,j} = hLU;
         end
         %}
-    end
-end
-fr = 1e3./mean_rcd;
+
+xdata = e_range;
+ydata = fr(:,1)';
+r = @(k,xdata) k(1)./(k(2)+1./exp(k(3).*log(xdata)));
+k0 = [100,5,5];
+kfit1 = lsqcurvefit(r,k0,xdata,ydata);
+XX = 0:1e-1:15;
+YY1 = r(kfit1,XX);
+%  5.2930    0.0497    1.2600
+
+xdata = e_range;
+ydata = fr(:,2)';
+r = @(k,xdata) k(1)./(k(2)+1./exp(k(3).*log(xdata)));
+k0 = [100,5,5];
+kfit2 = lsqcurvefit(r,k0,xdata,ydata);
+XX = 0:1e-1:15;
+YY2 = r(kfit2,XX);
+% 1.1790    0.0113    1.5953
 
 figure;
-semilogx(e_range,fr(:,1)',e_range,fr(:,2)');
-legend('mask off','mask on');
-xlabel('Input Firing Rate');
-ylabel('Response Firing Rate');
-
-figure;
+hold on
 plot(e_range,fr(:,1)',e_range,fr(:,2)');
+plot(XX,YY1);
+plot(XX,YY2);
 legend('mask off','mask on');
 xlabel('Input Firing Rate');
 ylabel('Response Firing Rate');
-%% Plot filter & hazard function
-figure
-nn = 0;
-for i = 1:length(tau_E_range)
-    for j = 1:length(tau_M_range)
-        nn = nn + 1;
-        subplot(length(tau_E_range),length(tau_M_range),nn);hold on
-        h = history_rcd{i,j};
-        hL = historyLU_rcd{i,j}(:,1);
-        hU = historyLU_rcd{i,j}(:,2);
-        plot((1:length(h)),h);
-        fill([(1:length(h)) fliplr(1:length(h))],[hL' fliplr(hU')],'b','facealpha',0.2,'edgealpha',0);
-        xlim([1 length(h) ]);
-        title(['\tau_{input} = ',num2str(tau_E_range(i)),';\tau_M = ',num2str(tau_M_range(j))]);
-        grid on
-    end
-end
-figure
-nn = 0;
-for i = 1:length(tau_E_range)
-    for j = 1:length(tau_M_range)
-        nn = nn + 1;
-        subplot(length(tau_E_range),length(tau_M_range),nn);hold on
-        if fit_k == 1
-            k = stimulus_rcd{i,j};
-            kL = stimulusLU_rcd{i,j}(:,1);
-            kU = stimulusLU_rcd{i,j}(:,2);
-            plot((1:length(k)),k);
-            fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')],'b','facealpha',0.2,'edgealpha',0);
-            xlim([0 length(k)]);
-            set(gca,'xtick',0:round(length(k)/2):length(k),'xticklabel',round(fliplr(-dt*(0:round(length(k)/2):length(k)))));
-            grid on
-            title(['\tau_{input} = ',num2str(tau_E_range(i)),';\tau_M = ',num2str(tau_M_range(j))]);
-        else
-            h = hazard_rcd{i,j};
-            hL = hazardLU_rcd{i,j}(:,1);
-            hU = hazardLU_rcd{i,j}(:,2);
-            plot((1:length(h)),h);
-            fill([(1:length(h)) fliplr(1:length(h))],[hL' fliplr(hU')],'b','facealpha',0.2,'edgealpha',0);
-            xlim([1 length(h) ]);
-            title(['\tau_{input} = ',num2str(tau_E_range(i)),';\tau_M = ',num2str(tau_M_range(j))]);
-            grid on
-        end
 
-    end
-end
-figure
-T = 1e3;
-N = 10;
-nn = 0;
-for i = 1:length(tau_E_range)
-    for j = 1:length(tau_M_range)
-        nn = nn + 1;
-        subplot(length(tau_E_range),length(tau_M_range),nn);
-        plotraster(reshape(y_sparse_rcd{i,j}(T+1:N*T+T),[],N)',1:T,'');
-        title(['\tau_{input} = ',num2str(tau_E_range(i)),';\tau_M = ',num2str(tau_M_range(j))]);
-    end
-end
-%% Features
-[peakVal,peakLoc,dipVal,dipLoc] = get_features(history_rcd,historyLU_rcd,0,tau_E_range,tau_M_range);
-[peakVal,peakLoc,dipVal,dipLoc] = get_features(stimulus_rcd,stimulusLU_rcd,1,tau_E_range,tau_M_range);
 
 %%
 %{
