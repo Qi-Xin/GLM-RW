@@ -40,7 +40,7 @@ I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
 
 I_record = random('poisson',I,1,tot_t);
-%I_record(find(I_record>=2)) = 1;
+I_record(find(I_record>=2)) = 1;
 I_record = maxSig*I_record;
 %I = zeros(T,1);
 
