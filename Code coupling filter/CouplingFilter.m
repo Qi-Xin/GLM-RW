@@ -1,5 +1,6 @@
 clearvars;
 
+addpath(genpath('D:/code'))
 tau_E = 1e-3;           % 1ms
 tau_I = tau_E;
 tau_M = 20;
