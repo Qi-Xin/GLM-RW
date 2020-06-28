@@ -15,7 +15,9 @@ V_E = 0.023;
 V_I = V_E;
 adjStepOrNot = 0;
 adjValue = 50;        % 0.1ms
-tot_t = 5e6;
+
+inputNeuronNum = 100;
+tot_t = 1e6;
 tot_N = 1e4;
 V_th = 1;
 V_reset = 0;
@@ -39,6 +41,10 @@ repnum = ceil(tot_t/length(I_per));
 I = repmat(I_per,1,repnum);
 I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
+
+I_allinputs = random('poisson',20*I,1,tot_t);
+I_record(find(I_record>=2)) = 1;
+I_record = maxSig*I_record;
 
 I_record = random('poisson',20*I,1,tot_t);
 I_record(find(I_record>=2)) = 1;
