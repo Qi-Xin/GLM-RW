@@ -7,17 +7,13 @@ tau_M = 20;
 dt = 1;
 p = 5e1;
 q = 5e1;
-
 bin = 5;   %ms
-%V_E = 1*(1-exp(-dt/tau_E));
 V_E = 0.023;
-%V_E = 0.1;
 V_I = V_E;
-adjStepOrNot = 0;
-adjValue = 50;        % 0.1ms
 
-inputNeuronNum = 100;
-tot_t = 1e6;
+inpNeuNum = 1e2;
+recNeuNum = 1;
+tot_t = 3e6;
 tot_N = 1e4;
 V_th = 1;
 V_reset = 0;
@@ -26,7 +22,8 @@ signalType = 2; % 1 for no signal, 2 for square wave, 3 for gamma
 I_per = 0*ones(1,1e3);
 maxSig = 5e-2;
 if signalType == 2
-    I_per(251:750) = ones(1,500);
+    I_per(101:400) = ones(1,300);
+    I_per(601:800) = ones(1,200);
     I_per = I_per/max(I_per)*maxSig;
 end
 if signalType == 3
@@ -34,125 +31,25 @@ if signalType == 3
     I_per(1:1000) = pdf(pd,[1:1000]);
     I_per = I_per/max(I_per)*maxSig;
 end
-%plot(I_per);
 
-
-repnum = ceil(tot_t/length(I_per));
-I = repmat(I_per,1,repnum);
+repNum = ceil(tot_t/length(I_per));
+I = repmat(I_per,1,repNum);
 I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
 
-I_allinputs = random('poisson',20*I,1,tot_t);
-I_record(find(I_record>=2)) = 1;
-I_record = maxSig*I_record;
+I_AllInputsInd = random('poisson',repmat(I,inpNeuNum,1),inpNeuNum,tot_t);
+I_AllInputsInd(find(I_AllInputsInd>=2)) = 1;
+I_AllInputs = sum(I_AllInputsInd);
+I_AllInputs = I_AllInputs/inpNeuNum;
 
-I_record = random('poisson',20*I,1,tot_t);
-I_record(find(I_record>=2)) = 1;
-I_record = maxSig*I_record;
-%I = zeros(T,1);
+randomChoose = randperm(inpNeuNum);
+randomChoose = randomChoose(1:recNeuNum);
+I_record = sum(I_AllInputsInd(randomChoose,:),1);
 
-%{
-Inverse Gaussian: 
-tau_E = 10*1e-5;           % 0.1ms
-tau_I = tau_E;          % 0.1ms
-tau_M = 10*1e5;          % 0.1ms
-dt = 10*0.1;            % 0.1ms
-p = 1.2e-2;
-q = 1e-2;
-
-Clock-like: 
-tau_E = 10*1e-5;           % 0.1ms
-tau_I = tau_E;          % 0.1ms
-tau_M = 10*500;          % 0.1ms
-dt = 10*0.1;            % 0.1ms
-p = 3e-1;
-q = 1e-1;
-
-Poission-like: 
-tau_E = 10*1e-5;           % 0.1ms
-tau_I = tau_E;          % 0.1ms
-tau_M = 10*25;          % 0.1ms
-dt = 10*0.1;            % 0.1ms
-p = 1.2e-2;
-q = 1e-2;
-
-Burst: 
-tau_E = 10*2e2;           % 0.1ms
-tau_I = tau_E;          % 0.1ms
-tau_M = 10*25;          % 0.1ms
-dt = 10*0.1;            % 0.1ms
-p = 0.5e-4;
-q = 0.2e-4;
-
-tau_E = 10*1e-3;           % 0.1ms   for illustrating tau_input: 1e-3,30,200
-tau_I = tau_E;          % 0.1ms
-tau_M = 10*25;          % 0.1ms
-dt = 10*0.1;            % 0.1ms
-p = 2e-2;
-q = 1e-2;
-%}
-
-
-%% Adjust Steps
-if adjStepOrNot == 1
-    x_up = 100;
-    x_down = 1e-5;
-    error = 1e-5;
-    res_down = GetMeanISI_J(tau_E,tau_I,tau_M,x_down*V_E,x_down*V_I,p,q,V_th,V_reset,I_noInp,tot_t,dt,adjValue);
-    res_up = GetMeanISI_J(tau_E,tau_I,tau_M,x_up*V_E,x_up*V_I,p,q,V_th,V_reset,I_noInp,tot_t,dt,adjValue);
-    while(res_down * res_up < 0)
-        x = 0.5*(x_up + x_down);
-        res = GetMeanISI_J(tau_E,tau_I,tau_M,x*V_E,x*V_I,p,q,V_th,V_reset,I_noInp,tot_t,dt,adjValue);
-        if( res*res_down < 0 )
-            x_up = x;
-        else
-            x_down = x;
-        end
-        if( abs(x_up-x_down) < error )
-            break;
-        end
-    end
-    result_x = 0.5*(x_up + x_down)
-    V_E = result_x*V_E;
-    V_I = result_x*V_I;
-end
-ddt = bin;
 
 %% Simulation
-[ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
+[ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I_AllInputs,tot_t,dt);
 y = full(y_sparse);
-
-%% Plot Raster
-%{
-T = 3e3;
-N = 10;
-%{
-figure
-plotraster(reshape(y(1:10*T),[],10)',1:T,'Simulated Result');
-%}
-subplot(6,1,3);
-plot((1:T),inputE(1:T),(1:T),inputI(1:T),(1:T),I(1:T));
-xlabel('t/s');
-ylabel('Amplitude');
-legend('Excitatory Poisson Input','Inhibitory Poisson Input');
-title('Poisson Noise Input');
-subplot(6,1,4);
-hold on
-plot((1:T),I(1:T));
-plot((1:T),I_record(1:T));
-xlabel('t/s');
-ylabel('Amplitude');
-legend('Population Input','Recorded Neuron');
-title('Signal Input');
-ylim([0 1e-1]);
-subplot(6,1,5);
-plot(1e-4*(1:T),V(1:T));
-xlabel('t/s');
-ylabel('Voltage');title('Voltage');
-subplot(6,1,6);
-plotraster(reshape(y_sparse(1:1*T),[],1)',1:T,'Spike train');
-title('Spike train');
-%}
 
 %% Plot Raster
 T = 1e3;
@@ -165,7 +62,9 @@ title('Spike train');
 xlabel('ms');
 ylabel('trial');
 
+
 %% Tracking Signal
+ddt = bin;
 subplot(2,1,2);
 hold on
 tot_N = (tot_t/length(I_per));
@@ -196,10 +95,10 @@ nkt = 150; % number of ms in stim filter
 kbasprs.neye = 0; % number of "identity" basis vectors near time of spike;
 kbasprs.ncos = 7; % number of raised-cosine vectors to use
 kbasprs.kpeaks = [1 round(nkt/1.5)];  % position of first and last bump (relative to identity bumps)
-kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
+kbasprs.b = 5; % how nonlinear to make spacings (larger -> more linear)
 %%% basis functions for post-spike kernel
 ihbasprs.ncols = 10;  % number of basis vectors for post-spike kernel
-hPeaksMax = 70;
+hPeaksMax = 50;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
 ihbasprs.absref = 0; % absolute refractory period, in ms
@@ -214,6 +113,7 @@ plotKS = 0;
 [kn, hn, dcn, prsn, kbasis, hbasis, stats] = fit_glm(I_record',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
 [pvaluen, raten, h_outputn, k_outputn] = KStest(y_glm, hn', I_record, kn', dcn, plotKS);
 nlogln = -sum(log( raten.*y_glm + (1-raten).*(1-y_glm) ));
+
 %% Fit Pillow GLM (Population) 
 T = tot_t;
 %T = 1e6;
@@ -221,18 +121,18 @@ y_glm = y(1,1:T);
 
 nkt = 100; % number of ms in stim filter
 kbasprs.neye = 0; % number of "identity" basis vectors near time of spike;
-kbasprs.ncos = 7; % number of raised-cosine vectors to use
+kbasprs.ncos = 5; % number of raised-cosine vectors to use
 kbasprs.kpeaks = [1 round(nkt/1.5)];  % position of first and last bump (relative to identity bumps)
-kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
+kbasprs.b = 5; % how nonlinear to make spacings (larger -> more linear)
 %%% basis functions for post-spike kernel
 ihbasprs.ncols = 10;  % number of basis vectors for post-spike kernel
-hPeaksMax = 70;
+hPeaksMax = 50;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
 ihbasprs.absref = 0; % absolute refractory period, in ms
 
-[kp, hp, dcp, prsp, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
-[pvaluep, ratep, h_outputp, k_outputp] = KStest(y_glm, hp', I, kp', dcp, plotKS);
+[kp, hp, dcp, prsp, kbasis, hbasis, stats] = fit_glm(I_AllInputs',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+[pvaluep, ratep, h_outputp, k_outputp] = KStest(y_glm, hp', I_AllInputs, kp', dcp, plotKS);
 nloglp = -sum(log( ratep.*y_glm + (1-ratep).*(1-y_glm) ));
 %% Plot Output
 T = 1e3;

@@ -55,13 +55,15 @@ end
 test_cdf = makedist('exp', 'mu', 1);
 [h, pvalue] = kstest(z, 'CDF', test_cdf);
 
-figure;
-hold on
-theta = mean(z);
-xx = 0:1e-2:10;
-plot(xx,1/theta*exp(-xx./theta));
-histogram(z,0:0.1:10,'Normalization','pdf');
-xlim([0 10]);
+if PlotFlag==1
+    figure;
+    hold on
+    theta = mean(z);
+    xx = 0:1e-2:10;
+    plot(xx,1/theta*exp(-xx./theta));
+    histogram(z,0:0.1:10,'Normalization','pdf');
+    xlim([0 10]);
+end
 
 
 end

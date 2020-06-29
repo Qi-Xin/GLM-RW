@@ -168,10 +168,9 @@ if plotFlag
     subplot(2,3,4);hold on
     %{
     %}
-    kL = kL/max(k);
-    kU = kU/max(k);
     k = k/max(k);
-
+    kL = kL/max(k);
+    kU = kL/max(k);
     plot((1:length(k)),k);
     if fit_k == 1
         fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')],'b','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
