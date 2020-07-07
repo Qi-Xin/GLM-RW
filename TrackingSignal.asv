@@ -4,8 +4,8 @@ tau_E = 1e-3;           % 1ms
 tau_I = tau_E;
 tau_M = 20;
 dt = 1;
-p = 0.3e1;
-q = 0e1;
+p = 1e1;
+q = 1e1;
 %{
 p = 5e1;
 q = 5e1;
