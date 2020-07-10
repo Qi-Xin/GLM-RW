@@ -17,7 +17,7 @@ p = 1e4;
 q = 1e4;
 %}
 
-tot_t = 1e6;
+tot_t = 1e5;
 bin = 1;   %ms
 ddt = bin;
 V_E = 0.023;
