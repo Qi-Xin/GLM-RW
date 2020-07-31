@@ -4,9 +4,12 @@ tau_E = 1e-3;           % 1ms
 tau_I = tau_E;
 tau_M = 20;
 dt = 1;
-p = 0.3e1;
+p = 2.3e1;
 q = 0e1;
 %{
+p = 0.3e1;
+q = 0e1;
+
 p = 5e1;
 q = 5e1;
 
@@ -17,11 +20,11 @@ p = 1e4;
 q = 1e4;
 %}
 
-tot_t = 1e5;
+tot_t = 1e7;
 bin = 1;   %ms
 ddt = bin;
-V_E = 0.023;
-V_I = 0.023;
+V_E = 0.023/10;
+V_I = 0.023/10;
 adjStepOrNot = 0;
 adjValue = 50;
 V_th = 1;
@@ -240,6 +243,17 @@ title('Spike Probability & Signal');
 %axis([0 1000 -0.005 0.09]);
 xlabel('t');
 ylabel('Signal');
+
+%% MISE
+target = fr2/tot_N/ddt;
+groundTrue = I_per;
+%baseline = mean(target(1:200));
+%fun = @(k) sum(((target-baseline)*k - groundTrue).^2)
+%x0 = 1;
+fun = @(k) sum(((target-k(2))*k(1) - groundTrue).^2)
+x0 = [1,0.2];
+[x,fval] = fminunc(fun,x0)
+
 %% Fit GLM with no input and no input filter
 %{
 T = tot_t;
