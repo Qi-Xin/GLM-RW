@@ -1,18 +1,18 @@
-%%% change p_list for range
+%%% change line 7 p_list for range
 %%% change line 44 for E/I balance or only E,
 %%% change line 14 and 15 for steps
 
 clearvars;
 %p_list = logspace(-1.3,4,20);     % balance
-p_list = logspace(-1.5,1.3,35);    % only Excitation
+p_list = logspace(-1.3,2,35);    % only Excitation
 repeat = 10;
 IMSE_raw = NaN*zeros(length(p_list),repeat);
 
-tot_t = 1e6;
+tot_t = 1e7;
 bin = 1;   %ms
 ddt = bin;
-V_E = 0.05;
-V_I = 0.05;
+V_E = 0.02;
+V_I = V_E;
 V_th = 1;
 V_reset = 0;
 tau_E = 1e-3;       % 1ms
