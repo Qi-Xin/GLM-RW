@@ -1,4 +1,5 @@
-function [k h dc prs kbasis hbasis stats kLU hLU dcLU] = fit_glm(x,y,dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag)
+function [k h dc prs kbasis hbasis stats kLU hLU dcLU] = ...
+    fit_glm(x,y,dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag)
 % [k h dc prs kbasis hbasis] = fit_glm(x,y,dt,nkt,kbasprs,ihbasprs,prs,softRect,plotFlag,maxIter,tolFun,L2pen)
 %
 %  This code fits a Poisson GLM to given data, using basis vectors to
@@ -124,8 +125,10 @@ end
 %% optimization with glmfit
 if fit_k == 1
     [prs,dev,stats] = glmfit([xconvki,yconvhi],y,'poisson');
-else
+elseif fit_k == 0
     [prs,dev,stats] = glmfit([yconvhi],y,'poisson');
+elseif fit_k == 2
+    [prs,dev,stats] = glmfit([xconvki],y,'poisson');
 end
 se = stats.se;
 prsL = prs-se;
@@ -138,13 +141,20 @@ if fit_k == 1
     h = hbasis*prs(nkbasis+2:end); % k basis functions weighted by given parameters
     hL = hbasis*prsL(nkbasis+2:end);
     hU = hbasis*prsU(nkbasis+2:end);
-else
+elseif fit_k == 0
     k = kbasis*zeros(nkbasis,1);
     kL = kbasis*zeros(nkbasis,1);
     kU = kbasis*zeros(nkbasis,1);
     h = hbasis*prs(2:end); % k basis functions weighted by given parameters
     hL = hbasis*prsL(2:end);
     hU = hbasis*prsU(2:end);
+elseif fit_k == 2
+    k = kbasis*prs(2:nkbasis+1); % k basis functions weighted by given parameters
+    kL = kbasis*prsL(2:nkbasis+1);
+    kU = kbasis*prsU(2:nkbasis+1);
+    h = hbasis*zeros(nhbasis,1);
+    hL = hbasis*zeros(nhbasis,1);
+    hU = hbasis*zeros(nhbasis,1);
 end
 dc = prs(1); % dc current (accounts for mean spike rate)
 dcLU = [prsL(1),prsU(1)];

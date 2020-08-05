@@ -3,12 +3,12 @@
 %%% change line 14 and 15 for steps
 
 clearvars;
-%p_list = logspace(-1.3,4,20);     % balance
-p_list = logspace(-1.3,2,35);    % only Excitation
+p_list = logspace(-1.3,4,20);     % balance
+%p_list = logspace(-1.3,2,35);    % only Excitation
 repeat = 10;
 IMSE_raw = NaN*zeros(length(p_list),repeat);
 
-tot_t = 1e7;
+tot_t = 1e6;
 bin = 1;   %ms
 ddt = bin;
 V_E = 0.02;
@@ -45,7 +45,8 @@ for ii = 1:length(p_list)
     for jj = 1:repeat
         [ii,jj]
         % Simulation
-        [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
+        [ISI,spike_timing,y_sparse,V,inputE,inputI] = ... 
+            GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
         y = full(y_sparse);
 
         T = 1e3;

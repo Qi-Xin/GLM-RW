@@ -150,7 +150,7 @@ db_rawV = NaN*zeros(length(recNeuNumList),repeat);
 db_rawL1 = NaN*zeros(length(recNeuNumList),repeat);
 db_rawL2 = NaN*zeros(length(recNeuNumList),repeat);
 
-maxSig = 4e-2;  % 7e-2, 12e-2, 4e-2
+maxSig = 7e-2;  % 7e-2, 12e-2, 4
 minSig = 2e-2;
 signalType = 3; % 1 for no signal, 2 for square wave, 3 for gamma, 4 for Gaussian random
 I_per = zeros(1,1e3);
@@ -266,9 +266,8 @@ hold on
 errorbar(recNeuNumList,mean(db_rawV,2),std(db_rawV')');
 errorbar(recNeuNumList,mean(db_rawL1,2),std(db_rawL1')');
 errorbar(recNeuNumList,mean(db_rawL2,2),std(db_rawL2')');
-plot([25,3e3],[db_true,db_true]);
+plot([1,3e3],[db_true,db_true]);
 xlabel('Number of Trials');
 ylabel('SNR /db');
 title('SNR');
 legend('Variance-based SNR','Likelihood-based SNR w/H','Likelihood-based SNR w/out H','Ground True SNR');
-xlim([20 3000])

@@ -1,6 +1,6 @@
 clearvars;
 
-p_list = [1e0,3e0,1e1,5e1,15e1,3e2];
+p_list = [1e0,2.5e0,0.5e1,1e1,1.5e1,2.5e1,5e1,15e1,3e2];
 I_list = linspace(0,4.8e-2,20);
 BalaV = NaN*zeros(length(p_list),length(I_list));
 lambda = NaN*zeros(length(p_list),length(I_list));
@@ -40,7 +40,7 @@ end
 figure;
 hold on
 for ii = 1:length(p_list)
-    plot(BalaV(ii,:),lambda(ii,:));
+    plot(BalaV(ii,:),log(lambda(ii,:)./1e3));
 end
 xlabel('Mean Voltage');
 ylabel('Firing rate');
