@@ -12,13 +12,13 @@ V_E = 0.023;
 V_I = V_E;
 
 inpNeuNum = 1e2;
-recNeuNum = 1;
+recNeuNum = 1e2;
 tot_t = 3e6;
 tot_N = 1e4;
 V_th = 1;
 V_reset = 0;
 
-signalType = 2; % 1 for no signal, 2 for square wave, 3 for gamma
+signalType = 3; % 1 for no signal, 2 for square wave, 3 for gamma
 I_per = 0*ones(1,1e3);
 maxSig = 5e-2;
 if signalType == 2

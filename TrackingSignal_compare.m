@@ -5,8 +5,13 @@
 clearvars;
 p_list = logspace(-1.3,4,20);     % balance
 %p_list = logspace(-1.3,2,35);    % only Excitation
-repeat = 10;
+repeat = 3;
 IMSE_raw = NaN*zeros(length(p_list),repeat);
+SNR_indirect_raw = NaN*zeros(length(p_list),repeat);
+SNR_indirect_baseline_raw = NaN*zeros(length(p_list),repeat);
+SNR_indirect_Lesica_raw = NaN*zeros(length(p_list),repeat);
+SNR_KL_full_raw = NaN*zeros(length(p_list),repeat);
+SNR_KL_woH_raw = NaN*zeros(length(p_list),repeat);
 
 tot_t = 1e6;
 bin = 1;   %ms
@@ -41,7 +46,7 @@ I_noInp = zeros(1,tot_t);
 for ii = 1:length(p_list)
     p = p_list(ii);
     q = 0;
-    %q = p;
+    q = p;
     for jj = 1:repeat
         [ii,jj]
         % Simulation
@@ -52,7 +57,8 @@ for ii = 1:length(p_list)
         T = 1e3;
         N = 100;
         tot_N = (tot_t/length(I_per));
-        fr = sum(reshape(y,[],tot_N)');
+        ST = (reshape(y,[],tot_N)');
+        fr = sum(ST);
         if ddt ~= 1
             fr2 = reshape(fr,ddt,[]);
             fr2 = sum(fr2);
@@ -70,13 +76,97 @@ for ii = 1:length(p_list)
         x0 = [1,0.2];
         [x,fval] = fminunc(fun,x0);
         IMSE_raw(ii,jj) = fval;
+        
+        SNR_indirect_raw(ii,jj) = var(mean(ST)) / mean(var(ST));
+        SNR_indirect_baseline_raw(ii,jj) = var(mean(ST(:,201:800))) / mean(var(ST(:,[1:200,801:1000])));
+        SNR_indirect_Lesica_raw(ii,jj) = var(mean(ST)) / mean( var( (ST-mean(ST))' )' );
+        
+
+        %%% GLM with stimulus filter
+        y_glm = reshape(ST',1,[]);
+        y_glm(find(y_glm>1))=1;
+        I_AllInputs = I;
+        plotFlag = 0;
+        plotKS = 0;
+        dt = 1;
+        fit_k = 1;
+
+        nkt = 100; % number of ms in stim filter
+        kbasprs.neye = 0; % number of "identity" basis vectors near time of spike;
+        kbasprs.ncos = 5; % number of raised-cosine vectors to use
+        kbasprs.kpeaks = [1 round(nkt/1.5)];  % position of first and last bump (relative to identity bumps)
+        kbasprs.b = 10; % how nonlinear to make spacings (larger -> more linear)
+        %%% basis functions for post-spike kernel
+        ihbasprs.ncols = 5;  % number of basis vectors for post-spike kernel
+        hPeaksMax = 200;
+        ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
+        ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
+        ihbasprs.absref = 0; % absolute refractory period, in ms
+
+        [k, h, dc, prs, kbasis, hbasis, stats] = ...
+            fit_glm(I_AllInputs',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+        [pvalue, rate, h_output, k_output] = KStest(y_glm, h', I_AllInputs, k', dc, plotKS);
+        nlogl_0HS = -sum( log(rate).*y_glm - rate );    % 0HS : baseline, history, stimulus ALL included
+        %nlogl_satured = sum( y_glm );
+        nlogl_satured = 0;
+        Dev_0HS = 2* (nlogl_0HS - nlogl_satured);
+
+        % without stimulus filter
+        fit_k = 0;
+
+        [k, h, dc, prs, kbasis, hbasis, stats] = ...
+            fit_glm(zeros(1,length(I_AllInputs))',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+        k = zeros(1,length(k))';
+        [pvalue, rate, h_output, k_output] = KStest(y_glm, h', I_AllInputs, k', dc, plotKS);
+        nlogl_0H = -sum( log(rate).*y_glm - rate );    % 0H : baseline, history included
+        Dev_0H = 2* (nlogl_0H - nlogl_satured);
+        % without history filter
+        fit_k = 2;
+
+        [k, h, dc, prs, kbasis, hbasis, stats] = ...
+            fit_glm(I_AllInputs',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+        [pvalue, rate, h_output, k_output] = KStest(y_glm, h', I_AllInputs, k', dc, plotKS);
+        nlogl_0S = -sum( log(rate).*y_glm - rate );    % 0S : baseline, stimulus included
+        Dev_0S = 2* (nlogl_0S - nlogl_satured);
+
+        % without both history filter and stimulus filter, only baseline
+        rate0 = ones(1,length(y_glm)) * sum(y_glm)/length(y_glm);
+        nlogl_0 = -sum( log(rate0).*y_glm - rate0 );    % 0 : baseline included
+        Dev_0 = 2* (nlogl_0 - nlogl_satured);
+
+        % 
+        SNR_glmS = (Dev_0H - Dev_0HS +kbasprs.ncos )...
+            /(Dev_0HS +1+kbasprs.ncos+ihbasprs.ncols );
+        SNR_glmH = (Dev_0S - Dev_0HS +ihbasprs.ncols )...
+            /(Dev_0HS +1+kbasprs.ncos+ihbasprs.ncols );
+        SNR_glmS2 = (Dev_0 - Dev_0S +kbasprs.ncos )...
+            /(Dev_0S +1+kbasprs.ncos );
+        db_glmS = 10*log10(SNR_glmS);
+        db_glmS2 = 10*log10(SNR_glmS2);
+        db_glmH = 10*log10(SNR_glmH);
+
+        EPEsignal = sum( (rate0 - rate).^2 );
+        EPEnoise = sum( (y_glm - rate).^2 ) ;
+        EPEsignal2 = sum( (y_glm - rate0).^2 ) - EPEnoise;
+        SNR_EPE = EPEsignal/EPEnoise;
+        db_EPE = 10*log10(SNR_EPE);
+
+
+        SNR_KL_full_raw(ii,jj) = SNR_glmS;
+        SNR_KL_woH_raw(ii,jj) = SNR_glmS2;
     end
 end
 %%
 figure;
 hold on
 errorbar(p_list*1e3/50,mean(IMSE_raw,2),std(IMSE_raw')');
+errorbar(p_list*1e3/50,mean(SNR_indirect_raw,2),std(SNR_indirect_raw')');
+errorbar(p_list*1e3/50,mean(SNR_indirect_baseline_raw,2),std(SNR_indirect_baseline_raw')');
+errorbar(p_list*1e3/50,mean(SNR_indirect_Lesica_raw,2),std(SNR_indirect_Lesica_raw')');
+errorbar(p_list*1e3/50,mean(SNR_KL_full_raw,2),std(SNR_KL_full_raw')');
+errorbar(p_list*1e3/50,mean(SNR_KL_woH_raw,2),std(SNR_KL_woH_raw')');
 xlabel('Number of Background Noise Neurons (assuming each neuron is 50 Hz)');
-ylabel('MISE');
-title({'Mean Integrated Squared Error';'between True Stimulus and Normalized PSTH'});
+legend('MISE','SNR indirect raw','SNR indirect baseline raw','SNR indirect Lesica raw', ...
+    'SNR KL three componets','SNR KL two componets');
+%title({'Mean Integrated Squared Error';'between True Stimulus and Normalized PSTH'});
 

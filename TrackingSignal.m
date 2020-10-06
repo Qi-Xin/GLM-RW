@@ -130,6 +130,7 @@ end
 %% Simulation
 [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
 y = full(y_sparse);
+
 %% 
 %{
 max1 = ceil(max(ISI));
@@ -255,7 +256,7 @@ x0 = [1,0.2];
 [x,fval] = fminunc(fun,x0)
 
 %% Fit GLM with no input and no input filter
-%{
+
 T = tot_t;
 %T = 1e6;
 y_glm = y(1,1:T);
@@ -278,10 +279,15 @@ if max(I) == 0
 end
 plotFlag = 1;    % plot fit
 
-[k, h, dc, prs, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
-%}
-
-
+[kn, hn, dcn, prsn, kbasis, hbasis, stats] = fit_glm(I',y_glm',dt,nkt,kbasprs,ihbasprs,fit_k,plotFlag);
+[pvaluen, raten, h_outputn, k_outputn] = KStest(y_glm, hbasis(:,3)', I, kbasis(:,3)', dcn, 0);
+figure
+hold on
+T = 1e3;
+plot(1:T,h_outputn(1:T),'b');
+plot(1:T,k_outputn(1:T),'r');
+title('A Filter Basis Output');
+legend('History','Stimulus');
 %% Simulation for baseline hazard
 %{
 tot_t = 1e6;
