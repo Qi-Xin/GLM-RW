@@ -97,20 +97,40 @@ for i = 1:nPop
             yconvhi_all = [yconvhi_all,yconvhi];
         end
     end
-    [prs,dev,stats] = glmfit([Bspline,yconvhi_all],y{i},'poisson');
-    se = stats.se;
-    prs = [prs-se,prs,prs+se];
-    dc = prs(1,:);
-    B = Bspline*prs(2:nBspline+1,:);
-    inhomoBias_spmodel{i} = B+dc;
-    nn = 0;
-    for j = 1:nPop
-        if i~=j
-            cp_spmodel{i,j} = hbasis*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , : );
-            nn = nn+1;
+    
+    if i==3
+        [prs,dev,stats] = glmfit([yconvhi_all],y{i},'poisson');
+        se = stats.se;
+        prs = [prs-se,prs,prs+se];
+        dc = prs(1,:);
+        inhomoBias_spmodel{i} = dc;
+        nn = 0;
+        for j = 1:nPop
+            if i~=j
+                cp_spmodel{i,j} = hbasis*prs( (nhbasis*nn+2):(nhbasis*(nn+1)+1) , : );
+                nn = nn+1;
+            end
         end
+        fr_spmodel{i} = exp( [yconvhi_all]*prs(2:end,:) );
+    else
+        [prs,dev,stats] = glmfit([Bspline,yconvhi_all],y{i},'poisson');
+        se = stats.se;
+        prs = [prs-se,prs,prs+se];
+        dc = prs(1,:);
+        B = Bspline*prs(2:nBspline+1,:);
+        inhomoBias_spmodel{i} = B+dc;
+        nn = 0;
+        for j = 1:nPop
+            if i~=j
+                cp_spmodel{i,j} = hbasis*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , : );
+                nn = nn+1;
+            end
+        end
+        fr_spmodel{i} = exp( [Bspline,yconvhi_all]*prs(2:end,2)+prs(1,2) );
     end
-    fr_spmodel{i} = exp( [Bspline,yconvhi_all]*prs(2:end,:) );
+    
+
+    
 end
 
 
@@ -193,7 +213,7 @@ figure
 for i = 1:nPop
     for j = 1:nPop
         if i~=j
-            subplot(4,3,3*i-3+j)
+            subplot(5,3,3*i-3+j)
             hold on
             plot(cp_spmodel{i,j},'-b','LineWidth',1);
             %plot(cp_frmodel{i,j},'-r','LineWidth',1);
@@ -205,10 +225,15 @@ for i = 1:nPop
         end
     end
 end
-for i = 1:nPop
-    subplot(4,3,9+i)
+for i = 1:2
+    subplot(5,3,9+i)
     hold on
     plot(inhomoBias_spmodel{i}(1:T,:),'-b','LineWidth',1);
-    %plot(inhomoBias_frmodel{i}(1:T),'-r','LineWidth',1);
+    plot(inhomoBias_frmodel{i}(1:T,:),'-r','LineWidth',1);
 end
-    
+for i = 1:nPop
+    subplot(5,3,12+i)
+    hold on
+    plot(fr_spmodel{i}(1:T,:),'-b','LineWidth',1);
+    plot(inhomoBias_frmodel{i}(1:T,:),'-r','LineWidth',1);
+end
