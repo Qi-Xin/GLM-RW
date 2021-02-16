@@ -100,7 +100,7 @@ for bNum = 1:nkb
 end
 
 [ht,hbas,hbasis] = makeBasis_PostSpike(ihbasprs,dt);
-hbasis = [zeros(1,ihbasprs.ncols); hbasis]; % enforce causality: post-spike filter only affects future time points
+%hbasis = [zeros(1,ihbasprs.ncols); hbasis]; % enforce causality: post-spike filter only affects future time points
 
 nkbasis = size(kbasis,2); % number of basis functions for k
 nhbasis = size(hbasis,2); % number of basis functions for h
@@ -159,9 +159,6 @@ end
 dc = prs(1); % dc current (accounts for mean spike rate)
 dcLU = [prsL(1),prsU(1)];
 
-h = h(2:end);
-hL = hL(2:end);
-hU = hU(2:end);
 kLU = [kL,kU];
 hLU = [hL,hU];
 %% plot results

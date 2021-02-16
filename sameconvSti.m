@@ -1,4 +1,4 @@
-function G = sameconv(A, B)
+function G = sameconvSti(A, B)
 %  G = sameconv(A, B);
 %   
 %  Causally filters A with B, giving a column vector with same height as
