@@ -6,9 +6,10 @@ nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1;      % number of neurons recorded in each population
 T = 5e3;
 nTrial = 1e2;
-stopValue = 1e-2;
+stopValue = 3e-2;
 maxIter = 1e3;
 couplingStrength = 1/nNeu/3e2; % maximum of coupling filter
+jitter = 0;
 
 dt = 1;
 totT = nTrial*T;
@@ -30,16 +31,21 @@ cp_true = cell(nPop,nPop);
 % Set fr1 and fr2
 baselinefr = 2e-2;
 highestfr = 7e-2;
-fr{1} = get_signal(3,highestfr-baselinefr,T)+baselinefr;
-fr{2} = get_signal(4,highestfr-baselinefr,T)+baselinefr;
+
+fr{1} = zeros(1,nTrial*T);
+fr{2} = zeros(1,nTrial*T);
+for i = 1:nTrial
+    fr{1}( T*(i-1)+1 : T*i ) = get_signal(3,highestfr-baselinefr,T,jitter)+baselinefr;
+    fr{2}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
+end
 
 % get ground true coupling filter 1 and 2 (both are from a part of gamma)
-temp = get_signal(3,couplingStrength,2.5e2);
+temp = get_signal(3,couplingStrength,2.5e2,0);
 temp = temp(15:end);
 cp1 = zeros(1,3e2);
 cp1(1:length(temp)) = temp;
 
-temp = get_signal(3,couplingStrength,3e2);
+temp = get_signal(3,couplingStrength,3e2,0);
 temp = temp(30:end);
 cp2 = zeros(1,3e2);
 cp2(1:length(temp)) = temp;
@@ -48,8 +54,8 @@ cp_true{2,1} = cp1;
 cp_true{3,1} = cp2;
 
 % get y1 and y2
-all_y{1} = random('poisson',repmat(fr{1},nNeu,nTrial));
-all_y{2} = random('poisson',repmat(fr{2},nNeu,nTrial));
+all_y{1} = random('poisson',repmat(fr{1},nNeu,1));
+all_y{2} = random('poisson',repmat(fr{2},nNeu,1));
 
 % get fr3
 fr{3} = sameconv(sum(all_y{1})',cp1')'+sameconv(sum(all_y{2})',cp2')'+baselinefr;
@@ -64,13 +70,13 @@ for i = 1:nPop
     y{i} = all_y{i}(1,:)';
 end
 %%
-i = 1;
-figure
-subplot(2,1,1);
-plotraster(reshape(y{i}(1:nTrial*T),[],nTrial)',1:T,'Simulated Result');
-title('Spike train');
-xlabel('ms');
-ylabel('trial');
+% i = 1;
+% figure
+% subplot(2,1,1);
+% plotraster(reshape(y{i}(1:nTrial*T),[],nTrial)',1:T,'Simulated Result');
+% title('Spike train');
+% xlabel('ms');
+% ylabel('trial');
 %% spike train GLM
 % make basis for post-spike kernel
 ihbasprs.ncols = 5;  % number of basis vectors for post-spike kernel
@@ -212,3 +218,32 @@ for i = 1:nPop
     %plot(inhomoBias_frmodel{i}(1:T),'-r','LineWidth',1);
 end
     
+%%
+figure
+for i = 1:nPop
+    for j = 1:nPop
+        if i~=j
+            subplot(4,3,3*i-3+j)
+            hold on
+            %plot(cp_spmodel{i,j},'-b','LineWidth',1);
+            plot(cp_frmodel{i,j},'-r','LineWidth',1);
+            if isempty(cp_true{i,j})
+                plot(zeros(1,200),'-k','LineWidth',1);
+            else
+                plot(cp_true{i,j},'-k','LineWidth',1);
+            end
+        end
+    end
+end
+for i = 1:nPop
+    subplot(4,3,9+i)
+    hold on
+    %plot(inhomoBias_spmodel{i}(1:T,:),'-b','LineWidth',1);
+    plot(inhomoBias_frmodel{i}(1:T),'-r','LineWidth',1);
+end
+for i = 1:nPop
+    subplot(4,3,9+i)
+    hold on
+    %plot(inhomoBias_spmodel{i}(1:T,:),'-b','LineWidth',1);
+    plot(inhomoBias_frmodel{i}(1:T),'-r','LineWidth',1);
+end
