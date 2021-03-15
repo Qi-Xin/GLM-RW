@@ -6,10 +6,10 @@ nPop = 2;     % number of neuron population
 nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
-nTrial = 1e0;
+nTrial = 1e1;
 stopValue = 1e-3;
 maxIter = 10;
-couplingStrength = 1/nNeu/3e2; % maximum of coupling filter
+couplingStrength = 1/nNeu/2e2; % maximum of coupling filter
 jitter = 0;
 
 dt = 1;
@@ -74,16 +74,17 @@ end
 
 %% spike train GLM
 % make basis for post-spike kernel
-ihbasprs.ncols = 2;  % number of basis vectors for post-spike kernel
+ihbasprs.ncols = 5;  % number of basis vectors for post-spike kernel
 hPeaksMax = 40;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 1e3*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
 ihbasprs.absref = 0; % absolute refractory period, in ms
 [ht,hbas,hbasis] = makeBasis_PostSpike(ihbasprs,dt);
 nhbasis = size(hbasis,2); % number of basis functions for h
+% hbasis(2:end,1) = 0;
 
 % make B spline basis for inhomogenerous underlying firing rate
-nBspline = 2;
+nBspline = 5;
 Bspline = makeBasis_spline(nBspline,T);
 Bspline = repmat(Bspline,nTrial,1);
 
@@ -284,9 +285,13 @@ for i = 1:nPop
 end
 %%
 figure
-subplot(3,1,1)
+subplot(2,1,1)
 plot(prs_rcd{1}');
-subplot(3,1,2)
+legend('\beta_1^{(i)}','\beta_2^{(i)}','\beta_3^{(i)}','\beta_4^{(i)}','\beta_5^{(i)}');
+title('Coefficients for the Coupling filter from Neuron 1 to Neuron 2');
+xlabel('Iteration i');
+subplot(2,1,2)
 plot(prs_rcd{2}');
-subplot(3,1,3)
-plot(nlogL_rcd');
+legend('\beta_1^{(i)}','\beta_2^{(i)}','\beta_3^{(i)}','\beta_4^{(i)}','\beta_5^{(i)}');
+xlabel('Iteration i');
+title('Coefficients for the Coupling filter from Neuron 2 to Neuron 1');
