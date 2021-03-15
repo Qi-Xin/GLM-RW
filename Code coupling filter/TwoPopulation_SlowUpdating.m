@@ -9,8 +9,9 @@ T = 1e3;
 nTrial = 1e0;
 stopValue = 1e-3;
 maxIter = 10;
-couplingStrength = 1/nNeu/1e1; % maximum of coupling filter
+couplingStrength = 1/nNeu/2e2; % maximum of coupling filter
 jitter = 0;
+learningRate = 0.5;
 
 dt = 1;
 totT = nTrial*T;
@@ -74,7 +75,7 @@ end
 
 %% spike train GLM
 % make basis for post-spike kernel
-ihbasprs.ncols = 2;  % number of basis vectors for post-spike kernel
+ihbasprs.ncols = 3;  % number of basis vectors for post-spike kernel
 hPeaksMax = 40;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 1e3*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
@@ -165,7 +166,7 @@ for iter = 1:maxIter
             noImproveIter = 0;
         end
         
-        fr_frmodel{i} = fr_frmodelNew{i};
+        fr_frmodel{i} = fr_frmodel{i}*(1-learningRate)+fr_frmodelNew{i}*learningRate;
         
         if iter>47
             subplot(2,2,2*i)
