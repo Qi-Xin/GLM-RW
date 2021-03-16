@@ -9,8 +9,9 @@ T = 1e3;
 nTrial = 1e0;
 stopValue = 1e-3;
 maxIter = 10;
-couplingStrength = 1/nNeu/1e1; % maximum of coupling filter
+couplingStrength = 1/nNeu/1e2; % maximum of coupling filter
 jitter = 0;
+learningRate = 0.5; % change line 173 for slowly updating firing rate
 
 dt = 1;
 totT = nTrial*T;
@@ -37,7 +38,7 @@ highestfr = 7e-2;
 fr{1} = zeros(1,nTrial*T);
 fr{2} = zeros(1,nTrial*T);
 for i = 1:nTrial
-    fr{1}( T*(i-1)+1 : T*i ) = 1e-2*ones(1,T);
+    fr{1}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
 end
 
 % get ground true coupling filter 1 and 2 (both are from a part of gamma)
@@ -112,9 +113,14 @@ for i = 1:nPop
             nn = nn+1;
         end
     end
-    fr_spmodel{i} = exp( [Bspline,yconvhi_all]*prs(2:end,:) );
+    fr_spmodel{i} = exp( [Bspline,yconvhi_all]*prs(2:end,2)+prs(1,2) );
 end
 
+nlogL = 0;
+for i = 1:nPop
+    nlogL = nlogL + sum( fr_spmodel{i}-y{i}.*log(fr_spmodel{i}) ) ;
+end
+nlogL_spmodel = nlogL
 
 %% firing rate GLM
 prs_rcd = cell(1,2);
@@ -166,6 +172,7 @@ for iter = 1:maxIter
         end
         
         fr_frmodel{i} = fr_frmodelNew{i};
+        % fr_frmodel{i} = fr_frmodel{i}*(1-learningRate)+fr_frmodelNew{i}*learningRate;
         
         if iter>47
             subplot(2,2,2*i)

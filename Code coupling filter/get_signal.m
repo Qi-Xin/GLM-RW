@@ -8,16 +8,14 @@ if signalType == 2
     I_per = I_per/max(I_per)*maxSig;
 end
 if signalType == 3
-    pd = makedist('InverseGaussian','mu',0.6*T *(1+jitter*(rand(1,1)-0.5)),'lambda',1.2*T *(1+jitter*(rand(1,1)-0.5)));
-    I_per = pdf(pd,[1:T]);
+    pd = makedist('InverseGaussian','mu',0.4*T *(1+jitter*(rand(1,1)-0.5)),'lambda',1.2*T *(1+jitter*(rand(1,1)-0.5)));
+    I_per = pdf(pd,[1:2*T]);
     I_per = I_per/max(I_per)*maxSig *(1+jitter*(rand(1,1)-0.5));
-    I_per = circshift(I_per,ceil(0.4*T*(rand(1,1)-0.5)));
 end
 if signalType == 4
     pd = makedist('Normal','mu',0.6*T *(1+jitter*(rand(1,1)-0.5)),'sigma',0.1*T *(1+jitter*(rand(1,1)-0.5)));
     I_per = pdf(pd,[1:T]);
     I_per = I_per/max(I_per)*(1+jitter*(rand(1,1)-0.5));
-    I_per = circshift(I_per,ceil(0.4*T*(rand(1,1)-0.5)));
 end
 
 end

@@ -35,7 +35,7 @@ highestfr = 7e-2;
 fr{1} = zeros(1,nTrial*T);
 fr{2} = zeros(1,nTrial*T);
 for i = 1:nTrial
-    fr{1}( T*(i-1)+1 : T*i ) = get_signal(3,highestfr-baselinefr,T,jitter)+baselinefr;
+    fr{1}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
     fr{2}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
 end
 
