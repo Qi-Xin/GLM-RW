@@ -31,7 +31,7 @@ cp_true = cell(nPop,nPop);
 %% Simulation
 % Set fr1 and fr2
 %baselinefr = 2e-2;
-baselinefr = 2e-2;
+baselinefr = 3e-2;
 highestfr = 1e-1;
 
 fr{1} = zeros(1,nTrial*T);
@@ -40,7 +40,6 @@ for i = 1:nTrial
     fr{1}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
 %     fr{1}( T*(i-1)+1 : T*i ) = 3*baselinefr;
 end
-fr{1} = smooth(fr{1})';
 
 % get ground true coupling filter 1 and 2 (both are from a part of gamma)
 temp = get_signal(3,couplingStrength,75,0);
@@ -59,7 +58,7 @@ all_y{1} = random('poisson',repmat(fr{1},nNeu,1));
 %all_y{1} = random('binomial',1,repmat(fr{1},nNeu,1));
 
 % get fr2
-fr{2} = sameconv(sum(all_y{1})',cp1')'+baselinefr;
+fr{2} = sameconv_Cutoff(sum(all_y{1})',cp1',T)'+baselinefr;
 all_y{2} = random('poisson',repmat(fr{2},nNeu,1));
 %all_y{2} = random('binomial',1,repmat(fr{2},nNeu,1));
 
@@ -74,8 +73,8 @@ end
 
 %% spike train GLM
 % make basis for post-spike kernel
-ihbasprs.ncols = 3;  % number of basis vectors for post-spike kernel
-hPeaksMax = 60;
+ihbasprs.ncols = 7;  % number of basis vectors for post-spike kernel
+hPeaksMax = 120;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
 ihbasprs.b = 1*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
 ihbasprs.absref = 0; % absolute refractory period, in ms
@@ -84,7 +83,7 @@ nhbasis = size(hbasis,2); % number of basis functions for h
 % hbasis(2:end,1) = 0;
 
 % make B spline basis for inhomogenerous underlying firing rate
-nBspline = 2;
+nBspline = 3;
 Bspline = makeBasis_spline(nBspline,T);
 Bspline = repmat(Bspline,nTrial,1);
 
@@ -103,7 +102,7 @@ for smoothSigma = smoothSigmaList
             if i~=j
                 yconvhi = zeros(size(y{j},1),nhbasis);
                 for hnum = 1:nhbasis
-                    yconvhi(:,hnum) = sameconv(y_smooth{j},hbasis(:,hnum));
+                    yconvhi(:,hnum) = sameconv_Cutoff(y_smooth{j},hbasis(:,hnum),T);
                 end
                 yconvhi_all = [yconvhi_all,yconvhi];
             end
@@ -130,13 +129,12 @@ for smoothSigma = smoothSigmaList
     end
     nlogL_spmodel = [nlogL_spmodel,nlogL];
 end
+smoothSigma = min( smoothSigmaList(find(nlogL_spmodel == min(nlogL_spmodel))) , 200) ;
 %%
 figure;
 plot(smoothSigmaList,nlogL_spmodel);
+%% Best smooth para
 
-%%
-smoothSigma = smoothSigmaList(find(nlogL_spmodel == min(nlogL_spmodel)));
-figure
 for i = 1:nPop
     xx = [-3*smoothSigma:1:3*smoothSigma];
     yy = normpdf(xx,0,smoothSigma);
@@ -149,7 +147,7 @@ for i = 1:nPop
         if i~=j
             yconvhi = zeros(size(y{j},1),nhbasis);
             for hnum = 1:nhbasis
-                yconvhi(:,hnum) = sameconv(y_smooth{j},hbasis(:,hnum));
+                yconvhi(:,hnum) = sameconv_Cutoff(y_smooth{j},hbasis(:,hnum),T);
             end
             yconvhi_all = [yconvhi_all,yconvhi];
         end
@@ -176,26 +174,148 @@ for i = 1:nPop
 end
 nlogL_spmodelBest = nlogL;
 
+
+figure
+nplot = 0;
 for i = 1:nPop
     for j = 1:nPop
         if i~=j
-            subplot(4,3,3*i-3+j)
+            nplot = nplot+1;
+            subplot(3,2,nplot)
+            k = cp_spmodel{i,j}(:,2);
+            kL = cp_spmodel{i,j}(:,1);
+            kU = cp_spmodel{i,j}(:,3);
+            fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')], ...
+                'b','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
             hold on
-            plot(cp_spmodel{i,j},'-b','LineWidth',1);
-            %plot(cp_frmodel{i,j},'-r','LineWidth',1);
+            plot(k,'-b','LineWidth',1);
             if isempty(cp_true{i,j})
-                plot(zeros(1,200),'-k','LineWidth',1);
+                plot(zeros(1,200),'-r','LineWidth',1.5);
             else
-                plot(cp_true{i,j}/max(cp_true{i,j})*max(cp_spmodel{i,j}(:,2)),'-k','LineWidth',1);
+                plot(cp_true{i,j}/max(cp_true{i,j})*max(cp_spmodel{i,j}(:,2)),'-r','LineWidth',1.5);
             end
+            legend('Fitted ','Ground True');
+            xlim([0 200])
+            title('Coupling Filter from Neuron A to Neuron B');
         end
     end
 end
-for i = 1:nPop
-    subplot(4,3,9+i)
-    hold on
-    plot(inhomoBias_spmodel{i}(1:T,:),'-b','LineWidth',1);
-    %plot(inhomoBias_frmodel{i}(1:T),'-r','LineWidth',1);
-end
-title('sp model');
 
+
+%% Raw spike train
+for i = 1:nPop
+    yconvhi_all = [];
+    for j = 1:nPop
+        if i~=j
+            yconvhi = zeros(size(y{j},1),nhbasis);
+            for hnum = 1:nhbasis
+                yconvhi(:,hnum) = sameconv_Cutoff(y{j},hbasis(:,hnum),T);
+            end
+            yconvhi_all = [yconvhi_all,yconvhi];
+        end
+    end
+    [prs,dev,stats] = glmfit([Bspline,yconvhi_all],y{i},'poisson');
+    se = stats.se;
+    prs = [prs-se,prs,prs+se];
+    dc = prs(1,:);
+    B = Bspline*prs(2:nBspline+1,:);
+    inhomoBias_spmodel{i} = B+dc;
+    nn = 0;
+    for j = 1:nPop
+        if i~=j
+            cp_spmodel{i,j} = hbasis*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , : );
+            nn = nn+1;
+        end
+    end
+    fr_spmodel{i} = exp( [Bspline,yconvhi_all]*prs(2:end,2)+prs(1,2) );
+end
+
+nlogL = 0;
+for i = 1:nPop
+    nlogL = nlogL + sum( fr_spmodel{i}-y{i}.*log(fr_spmodel{i}) ) ;
+end
+nlogL_spmodel = [nlogL_spmodel,nlogL];
+
+for i = 1:nPop
+    for j = 1:nPop
+        if i~=j
+            nplot = nplot+1;
+            subplot(3,2,nplot)
+            k = cp_spmodel{i,j}(:,2);
+            kL = cp_spmodel{i,j}(:,1);
+            kU = cp_spmodel{i,j}(:,3);
+            fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')], ...
+                'b','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
+            hold on
+            plot(k,'-b','LineWidth',1);
+            if isempty(cp_true{i,j})
+                plot(zeros(1,200),'-r','LineWidth',1.5);
+            else
+                plot(cp_true{i,j}/max(cp_true{i,j})*max(cp_spmodel{i,j}(:,2)),'-r','LineWidth',1.5);
+            end
+            legend('Fitted ','Ground True');
+            xlim([0 200])
+            title('Coupling Filter from Neuron A to Neuron B');
+        end
+    end
+end
+
+%% Pooling spike train
+for i = 1:nPop
+    yconvhi_all = [];
+    for j = 1:nPop
+        if i~=j
+            yconvhi = zeros(size(y{j},1),nhbasis);
+            for hnum = 1:nhbasis
+                pooling = sum(reshape(y{j},T,[])')';
+                pooling = repmat(pooling,length(y{j})/length(pooling),1);
+                yconvhi(:,hnum) = sameconv_Cutoff(pooling,hbasis(:,hnum),T);
+            end
+            yconvhi_all = [yconvhi_all,yconvhi];
+        end
+    end
+    [prs,dev,stats] = glmfit([Bspline,yconvhi_all],y{i},'poisson');
+    se = stats.se;
+    prs = [prs-se,prs,prs+se];
+    dc = prs(1,:);
+    B = Bspline*prs(2:nBspline+1,:);
+    inhomoBias_spmodel{i} = B+dc;
+    nn = 0;
+    for j = 1:nPop
+        if i~=j
+            cp_spmodel{i,j} = hbasis*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , : );
+            nn = nn+1;
+        end
+    end
+    fr_spmodel{i} = exp( [Bspline,yconvhi_all]*prs(2:end,2)+prs(1,2) );
+end
+
+nlogL = 0;
+for i = 1:nPop
+    nlogL = nlogL + sum( fr_spmodel{i}-y{i}.*log(fr_spmodel{i}) ) ;
+end
+nlogL_spmodel = [nlogL_spmodel,nlogL];
+
+for i = 1:nPop
+    for j = 1:nPop
+        if i~=j
+            nplot = nplot+1;
+            subplot(3,2,nplot)
+            k = cp_spmodel{i,j}(:,2);
+            kL = cp_spmodel{i,j}(:,1);
+            kU = cp_spmodel{i,j}(:,3);
+            fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')], ...
+                'b','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
+            hold on
+            plot(k,'-b','LineWidth',1);
+            if isempty(cp_true{i,j})
+                plot(zeros(1,200),'-r','LineWidth',1.5);
+            else
+                plot(cp_true{i,j}/max(cp_true{i,j})*max(cp_spmodel{i,j}(:,2)),'-r','LineWidth',1.5);
+            end
+            legend('Fitted ','Ground True');
+            xlim([0 200])
+            title('Coupling Filter from Neuron A to Neuron B');
+        end
+    end
+end

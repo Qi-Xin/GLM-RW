@@ -13,7 +13,7 @@ if signalType == 3
     I_per = I_per/max(I_per)*maxSig *(1+jitter*(rand(1,1)-0.5));
 end
 if signalType == 4
-    pd = makedist('Normal','mu',0.5*T *(1+2*jitter*(rand(1,1)-0.5)),'sigma',0.1*T *(1+jitter*(rand(1,1)-0.5)));
+    pd = makedist('Normal','mu',0.5*T *(1+0*jitter*(rand(1,1)-0.5)),'sigma',0.1*T *(1+0*jitter*(rand(1,1)-0.5)));
     I_per = pdf(pd,[1:T]);
     I_per = I_per/max(I_per)*maxSig*(1+jitter*(rand(1,1)-0.5));
 end
