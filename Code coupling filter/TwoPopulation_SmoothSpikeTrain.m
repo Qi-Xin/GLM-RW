@@ -6,10 +6,10 @@ nPop = 2;     % number of neuron population
 nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
-nTrial = 5e2;
+nTrial = 3e2;
 stopValue = 1e-3;
-couplingStrength = 1/nNeu/1e2; % maximum of coupling filter
-jitter = 0;
+couplingStrength = 1/nNeu/3e1; % maximum of coupling filter
+jitter = 1; % 0 for no jitter , 1 for standard amount of jitter
 
 dt = 1;
 totT = nTrial*T;
@@ -31,23 +31,23 @@ cp_true = cell(nPop,nPop);
 %% Simulation
 % Set fr1 and fr2
 %baselinefr = 2e-2;
-baselinefr = 1e-2;
-highestfr = 7e-2;
+baselinefr = 2e-2;
+highestfr = 1e-1;
 
 fr{1} = zeros(1,nTrial*T);
 fr{2} = zeros(1,nTrial*T);
 for i = 1:nTrial
-    fr{1}( T*(i-1)+1 : T*i ) = get_signal(3,highestfr-baselinefr,T,jitter)+baselinefr;
+    fr{1}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
+%     fr{1}( T*(i-1)+1 : T*i ) = 3*baselinefr;
 end
+fr{1} = smooth(fr{1})';
 
 % get ground true coupling filter 1 and 2 (both are from a part of gamma)
 temp = get_signal(3,couplingStrength,75,0);
-temp = temp(5:end);
 cp1 = zeros(1,3e2);
 cp1(1:length(temp)) = temp;
 
 temp = get_signal(3,couplingStrength,3e2,0);
-temp = temp(30:end);
 cp2 = zeros(1,3e2);
 cp2(1:length(temp)) = temp;
 
@@ -74,10 +74,10 @@ end
 
 %% spike train GLM
 % make basis for post-spike kernel
-ihbasprs.ncols = 2;  % number of basis vectors for post-spike kernel
-hPeaksMax = 40;
+ihbasprs.ncols = 3;  % number of basis vectors for post-spike kernel
+hPeaksMax = 60;
 ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
-ihbasprs.b = 1e3*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
+ihbasprs.b = 1*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
 ihbasprs.absref = 0; % absolute refractory period, in ms
 [ht,hbas,hbasis] = makeBasis_PostSpike(ihbasprs,dt);
 nhbasis = size(hbasis,2); % number of basis functions for h
@@ -186,7 +186,7 @@ for i = 1:nPop
             if isempty(cp_true{i,j})
                 plot(zeros(1,200),'-k','LineWidth',1);
             else
-                plot(cp_true{i,j},'-k','LineWidth',1);
+                plot(cp_true{i,j}/max(cp_true{i,j})*max(cp_spmodel{i,j}(:,2)),'-k','LineWidth',1);
             end
         end
     end
