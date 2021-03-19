@@ -3,15 +3,15 @@ rng(1);
 
 addpath(genpath('D:/code'))
 nPop = 2;     % number of neuron population
-nNeu = 1e1;    % number of neuons in a population
+nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
 nTrial = 1e0;
 stopValue = 1e-3;
 maxIter = 10;
-couplingStrength = 1/nNeu/1e2; % maximum of coupling filter
+couplingStrength = 1/nNeu/2e1; % maximum of coupling filter
 jitter = 0;
-learningRate = 0.5; % change line 173 for slowly updating firing rate
+learningRate = 0.2; % change line 173 for slowly updating firing rate
 
 dt = 1;
 totT = nTrial*T;
@@ -171,8 +171,8 @@ for iter = 1:maxIter
             noImproveIter = 0;
         end
         
-        fr_frmodel{i} = fr_frmodelNew{i};
-        % fr_frmodel{i} = fr_frmodel{i}*(1-learningRate)+fr_frmodelNew{i}*learningRate;
+        %fr_frmodel{i} = fr_frmodelNew{i};
+        fr_frmodel{i} = fr_frmodel{i}*(1-learningRate)+fr_frmodelNew{i}*learningRate;
         
         if iter>47
             subplot(2,2,2*i)
@@ -191,6 +191,8 @@ for iter = 1:maxIter
             yyaxis right;
             plotraster(y{i}',1:T,'Simulated Result');
             ylim([0 4]);
+            title('Predicted Firing Rate of Neuron A');
+            legend('iteration 48','iteration 49','iteration 50');
         end
 
         
