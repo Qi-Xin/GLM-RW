@@ -1,6 +1,8 @@
 clearvars;
 rng(1);
 
+global hbasis Bspline nBspline nhbasis nPop T nTrial
+
 addpath(genpath('D:/code'))
 nPop = 2;     % number of neuron population
 nNeu = 1e2;    % number of neuons in a population
@@ -11,7 +13,7 @@ stopValue = 1e-3;
 maxIter = 10;
 couplingStrength = 1/nNeu/2e1; % maximum of coupling filter
 jitter = 0;
-learningRate = 0.2; % change line 173 for slowly updating firing rate
+learningRate = 1; % change line 173 for slowly updating firing rate
 
 dt = 1;
 totT = nTrial*T;
@@ -35,10 +37,25 @@ cp_true = cell(nPop,nPop);
 baselinefr = 1e-2;
 highestfr = 7e-2;
 
+% make B spline basis for inhomogenerous underlying firing rate
+nBspline = 4;
+Bspline = makeBasis_spline(nBspline,T);
+Bspline = repmat(Bspline,nTrial,1);
+
+% make basis for post-spike kernel
+ihbasprs.ncols = 6;  % number of basis vectors for post-spike kernel
+hPeaksMax = 40;
+ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
+ihbasprs.b = 0.2*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
+ihbasprs.absref = 0; % absolute refractory period, in ms
+[ht,hbas,hbasis] = makeBasis_PostSpike(ihbasprs,dt);
+nhbasis = size(hbasis,2); % number of basis functions for h
+% hbasis(2:end,1) = 0;
+
 fr{1} = zeros(1,nTrial*T);
 fr{2} = zeros(1,nTrial*T);
 for i = 1:nTrial
-    fr{1}( T*(i-1)+1 : T*i ) = get_signal(4,highestfr-baselinefr,T,jitter)+baselinefr;
+    fr{1}( T*(i-1)+1 : T*i ) = (highestfr-baselinefr)*Bspline(:,2)/max(Bspline(:,2)) + baselinefr;
 end
 
 % get ground true coupling filter 1 and 2 (both are from a part of gamma)
@@ -74,20 +91,6 @@ for i = 1:nPop
 end
 
 %% spike train GLM
-% make basis for post-spike kernel
-ihbasprs.ncols = 2;  % number of basis vectors for post-spike kernel
-hPeaksMax = 40;
-ihbasprs.hpeaks = [0 hPeaksMax];  % peak location for first and last vectors, in ms
-ihbasprs.b = 1e3*hPeaksMax;  % how nonlinear to make spacings (larger -> more linear)
-ihbasprs.absref = 0; % absolute refractory period, in ms
-[ht,hbas,hbasis] = makeBasis_PostSpike(ihbasprs,dt);
-nhbasis = size(hbasis,2); % number of basis functions for h
-% hbasis(2:end,1) = 0;
-
-% make B spline basis for inhomogenerous underlying firing rate
-nBspline = 2;
-Bspline = makeBasis_spline(nBspline,T);
-Bspline = repmat(Bspline,nTrial,1);
 
 for i = 1:nPop
     yconvhi_all = [];
@@ -123,6 +126,50 @@ end
 nlogL_spmodel = nlogL
 
 %% firing rate GLM
+
+function output_args = NLogLikelihood(x)
+
+    nprs = (1+nBspline+nhbasis*(nPop-1));
+    cp_frmodel = cell(nPop,nPop);
+    inhomoBias_frmodel = cell(1,nPop);
+    fr_frmodel = cell(1,nPop);
+    for i = 1:nPop
+        prs{i} = x(1+(i-1)*nprs:i*nprs);
+        dc{i} = prs{i}(1);
+        B{i} = Bspline*prs{i}(2:nBspline+1);
+        inhomoBias_frmodel{i} = B{i} + dc{i};
+
+        nn = 0;
+        for j = 1:nPop
+            if i~=j
+                cp_frmodel{i,j} = hbasis*prs{i}( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , : );
+                nn = nn+1;
+            end
+        end
+    end
+        
+    for trial = 1:nTrial
+        for i = 1:nPop
+
+        end
+        for t = 1:T
+
+        end
+
+    end
+  
+
+end
+
+
+fun = @NLogLikelihood;
+x0 = zeros(1,2*(1+ihbasprs.ncols+nBspline));
+[x,fval] = fminunc(fun,x0)
+
+
+
+
+
 prs_rcd = cell(1,2);
 nlogL_rcd = [];
 maxIter = 50;
@@ -195,7 +242,6 @@ for iter = 1:maxIter
             legend('iteration 48','iteration 49','iteration 50');
         end
 
-        
     end
     
     nlogL = 0;

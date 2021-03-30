@@ -6,12 +6,12 @@ nPop = 2;     % number of neuron population
 nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
-nTrial = 1e0;
+nTrial = 1e1;
 stopValue = 1e-3;
 maxIter = 10;
 couplingStrength = 1/nNeu/2e1; % maximum of coupling filter
-jitter = 0;
-learningRate = 0.2; % change line 173 for slowly updating firing rate
+jitter = 1;
+learningRate = 1; % change line 173 for slowly updating firing rate
 
 dt = 1;
 totT = nTrial*T;
@@ -60,7 +60,7 @@ all_y{1} = random('poisson',repmat(fr{1},nNeu,1));
 %all_y{1} = random('binomial',1,repmat(fr{1},nNeu,1));
 
 % get fr2
-fr{2} = sameconv(sum(all_y{1})',cp1')'+baselinefr;
+fr{2} = sameconv_Cutoff(sum(all_y{1})',cp1')'+baselinefr;
 all_y{2} = random('poisson',repmat(fr{2},nNeu,1));
 %all_y{2} = random('binomial',1,repmat(fr{2},nNeu,1));
 
@@ -95,7 +95,7 @@ for i = 1:nPop
         if i~=j
             yconvhi = zeros(size(y{j},1),nhbasis);
             for hnum = 1:nhbasis
-                yconvhi(:,hnum) = sameconv(y{j},hbasis(:,hnum));
+                yconvhi(:,hnum) = sameconv_Cutoff(y{j},hbasis(:,hnum));
             end
             yconvhi_all = [yconvhi_all,yconvhi];
         end
@@ -140,7 +140,7 @@ for iter = 1:maxIter
             if i~=j
                 yconvhi = zeros(size(fr_frmodel{j},1),nhbasis);
                 for hnum = 1:nhbasis
-                    yconvhi(:,hnum) = sameconv(fr_frmodel{j},hbasis(:,hnum));
+                    yconvhi(:,hnum) = sameconv_Cutoff(fr_frmodel{j},hbasis(:,hnum));
                 end
                 yconvhi_all = [yconvhi_all,yconvhi];
             end
