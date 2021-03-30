@@ -10,6 +10,8 @@ nTrial = 3e2;
 stopValue = 1e-3;
 couplingStrength = 1/nNeu/3e1; % maximum of coupling filter
 jitter = 1; % 0 for no jitter , 1 for standard amount of jitter
+baselinefr = 3e-2;
+highestfr = 1e-1;
 
 dt = 1;
 totT = nTrial*T;
@@ -31,8 +33,6 @@ cp_true = cell(nPop,nPop);
 %% Simulation
 % Set fr1 and fr2
 %baselinefr = 2e-2;
-baselinefr = 3e-2;
-highestfr = 1e-1;
 
 fr{1} = zeros(1,nTrial*T);
 fr{2} = zeros(1,nTrial*T);

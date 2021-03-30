@@ -8,9 +8,10 @@ rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
 nTrial = 1e1;
 stopValue = 1e-3;
-maxIter = 10;
 couplingStrength = 1/nNeu/2e1; % maximum of coupling filter
 jitter = 1;
+
+maxIter = 10;
 learningRate = 1; % change line 173 for slowly updating firing rate
 
 dt = 1;

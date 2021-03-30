@@ -11,7 +11,7 @@ T = 1e3;
 nTrial = 3e2;
 stopValue = 1e-3;
 couplingStrength = 1/nNeu/3e1; % maximum of coupling filter
-jitter = 0; % 0 for no jitter , 1 for standard amount of jitter
+jitter = 1; % 0 for no jitter , 1 for standard amount of jitter
 baselinefr = 3e-2;
 highestfr = 1e-1;
 
