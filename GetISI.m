@@ -22,11 +22,12 @@ for t = 2:( tot_t + add )
 end
 inputE = inputE( (add+1) :end);
 inputI = inputI( (add+1) :end);
+sum(inputE)
 for t = 2:tot_t
-    if V(t-1)>=1
+    if V(t-1)>=V_th
         spike_timing = [spike_timing,t-1];
         y(t-1) = 1;
-        V(t) = 0;
+        V(t) = V_reset;
         continue
     end
     

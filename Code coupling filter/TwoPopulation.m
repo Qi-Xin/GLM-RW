@@ -6,10 +6,12 @@ nPop = 2;     % number of neuron population
 nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
-nTrial = 1e1;
+nTrial = 3e2;
 stopValue = 1e-3;
 couplingStrength = 1/nNeu/2e1; % maximum of coupling filter
 jitter = 1;
+baselinefr = 1e-2;
+highestfr = 7e-2;
 
 maxIter = 10;
 learningRate = 1; % change line 173 for slowly updating firing rate
@@ -33,8 +35,6 @@ cp_true = cell(nPop,nPop);
 %% Simulation
 % Set fr1 and fr2
 %baselinefr = 2e-2;
-baselinefr = 1e-2;
-highestfr = 7e-2;
 
 fr{1} = zeros(1,nTrial*T);
 fr{2} = zeros(1,nTrial*T);
@@ -61,7 +61,7 @@ all_y{1} = random('poisson',repmat(fr{1},nNeu,1));
 %all_y{1} = random('binomial',1,repmat(fr{1},nNeu,1));
 
 % get fr2
-fr{2} = sameconv_Cutoff(sum(all_y{1})',cp1')'+baselinefr;
+fr{2} = sameconv_Cutoff(sum(all_y{1})',cp1',T)'+baselinefr;
 all_y{2} = random('poisson',repmat(fr{2},nNeu,1));
 %all_y{2} = random('binomial',1,repmat(fr{2},nNeu,1));
 
@@ -96,7 +96,7 @@ for i = 1:nPop
         if i~=j
             yconvhi = zeros(size(y{j},1),nhbasis);
             for hnum = 1:nhbasis
-                yconvhi(:,hnum) = sameconv_Cutoff(y{j},hbasis(:,hnum));
+                yconvhi(:,hnum) = sameconv_Cutoff(y{j},hbasis(:,hnum),T);
             end
             yconvhi_all = [yconvhi_all,yconvhi];
         end
@@ -141,7 +141,7 @@ for iter = 1:maxIter
             if i~=j
                 yconvhi = zeros(size(fr_frmodel{j},1),nhbasis);
                 for hnum = 1:nhbasis
-                    yconvhi(:,hnum) = sameconv_Cutoff(fr_frmodel{j},hbasis(:,hnum));
+                    yconvhi(:,hnum) = sameconv_Cutoff(fr_frmodel{j},hbasis(:,hnum),T);
                 end
                 yconvhi_all = [yconvhi_all,yconvhi];
             end
@@ -293,6 +293,7 @@ for i = 1:nPop
     %plot(inhomoBias_spmodel{i}(1:T,:),'-b','LineWidth',1);
     plot(inhomoBias_frmodel{i}(1:T),'-r','LineWidth',1);
 end
+
 %%
 figure
 subplot(2,1,1)

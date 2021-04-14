@@ -10,10 +10,10 @@ rec_nNeu = 1e0;      % number of neurons recorded in each population
 T = 1e3;
 nTrial = 3e2;
 stopValue = 1e-3;
-couplingStrength = 1/nNeu/3e1; % maximum of coupling filter
-jitter = 0; % 0 for no jitter , 1 for standard amount of jitter
-baselinefr = 3e-2;
-highestfr = 1e-1;
+couplingStrength = 1/nNeu/2e1; % maximum of coupling filter
+jitter = 0;
+baselinefr = 1e-2;
+highestfr = 7e-2;
 
 maxIter = 10;
 learningRate = 1; % change line 173 for slowly updating firing rate
@@ -129,7 +129,9 @@ nlogL_spmodel = nlogL
 
 Bspline = makeBasis_spline(nBspline,T);
 fun = @NLogLikelihood;
-x0 = 1e-2*ones(1,2*(1+nhbasis+nBspline));
+x0 = 0.01*rand(1,2*(1+nhbasis+nBspline));
+x0 = [0.0105   -0.0019    0.0738   -0.0028    0.0059   -0.0043   -0.0022    0.0073   -0.0041   -0.0005    0.0009 ...
+     0.0074    0.0040   -0.0082    0.0059    0.0014    0.0195    0.0301   -0.0017   -0.0002    0.0080   -0.0067]
 options = optimoptions(@fminunc,'Display','iter','Algorithm','quasi-newton','MaxIterations',100, ...
     'OptimalityTolerance',1e-10);
 [x,fval] = fminunc(fun,x0,options)
@@ -191,16 +193,12 @@ for i = 1:nPop
 end
 %%
 figure
-subplot(2,1,1)
-plot(prs_rcd{1}');
-legend('\beta_1^{(i)}','\beta_2^{(i)}','\beta_3^{(i)}','\beta_4^{(i)}','\beta_5^{(i)}');
-title('Coefficients for the Coupling filter from Neuron 1 to Neuron 2');
-xlabel('Iteration i');
-subplot(2,1,2)
-plot(prs_rcd{2}');
-legend('\beta_1^{(i)}','\beta_2^{(i)}','\beta_3^{(i)}','\beta_4^{(i)}','\beta_5^{(i)}');
-xlabel('Iteration i');
-title('Coefficients for the Coupling filter from Neuron 2 to Neuron 1');
+for i = 1:nPop
+    hold on
+    %plot(inhomoBias_spmodel{i}(1:T,:),'-b','LineWidth',1);
+    plot(fr_frmodel{i}(1:T),'-r','LineWidth',1);
+    plot(fr{i}(1:T),'-k','LineWidth',1);
+end
 
 %% function defination
 function [fr_frmodel,cp_frmodel,inhomoBias_frmodel] = getFR(x)
