@@ -7,6 +7,7 @@ spike_timing = [0];
 
 add = ceil(5*max([tau_E,tau_I,1e3/dt]));
 rdmE = random('poisson',p,1,tot_t+add);
+rdmE(add+2) = 1;
 rdmI = random('poisson',q,1,tot_t+add);
 inputE = zeros(1,tot_t + add);
 inputI = zeros(1,tot_t + add);

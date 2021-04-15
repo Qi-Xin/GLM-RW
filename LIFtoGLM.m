@@ -47,25 +47,45 @@ ylabel('Firing rate');
 title({'Mean Integrated Squared Error';'between True Stimulus and Normalized PSTH'});
 
 %%
-p = 1e-3;
+p = 5e-3;
 q = 0;
-tot_t = 1e7;
+tot_t = 1e8;
 bin = 1;
 ddt = bin;
-V_E = 0.1;
+V_E = 1e3;
 V_I = 0;
 V_th = 1e8;
 V_reset = 0;
-tau_E = 1e-5;
-tau_I = 1e-5;
+tau_E = 1e-3;
+tau_I = 1e-8;
 tau_M = 1e2;
 dt = 1;
 [~,~,~,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,1e8,V_reset,0*ones(1,tot_t),tot_t,dt,-1);
 figure
 h = histogram(V,5e1);
-yy = h.Values(10:end);
-xx = h.BinEdges(11:end);
+yy = h.Values;
+xx = h.BinEdges;
+%xx = cumsum(xx);
+%yy = cumsum(yy);
+start = 25;
+endnum = 0;
+xx= xx(start+1:end-endnum)';
+yy = yy(start:end-endnum)';
+[f1,gof1] = fit(xx(1:end),yy(1:end),'exp1');
+%[f2,gof2] = fit(xx(1:3),yy(1:3),'gauss1');
+ft = fittype('b/(c*x+a)','independent','x','dependent','y');
+[f3,gof3] = fit(xx,yy,ft);
 
+figure
+% subplot(2,2,1)
+plot(f1,xx,yy);
+title('Exp tail');
+% subplot(2,2,2)
+% plot(f2,xx,yy);
+% title('Gaussian tail');
+% subplot(2,2,3)
+% plot(f3,xx,yy);
+% title('1/x tail');
 %%
 T = 1e5;
 V = ones(1,T);
