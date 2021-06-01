@@ -207,7 +207,7 @@ for i = 1:nPop
     end
 end
 sample_estimated_fr_sm = fr_spmodel{2};
-sample_estimated_cppart_sm = yconvhi_all*prs( (nBspline+2):(nBspline+nhbasis+1) , 2 );
+sample_estimated_cppart_sm = yconvhi_all*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , 2 );
 %% Raw spike train
 for i = 1:nPop
     yconvhi_all = [];
@@ -273,7 +273,7 @@ for i = 1:nPop
     end
 end
 sample_estimated_fr_raw = fr_spmodel{2};
-sample_estimated_cppart_raw = yconvhi_all*prs( (nBspline+2):(nBspline+nhbasis+1) , 2 );
+sample_estimated_cppart_raw = yconvhi_all*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , 2 );
 %% Pooling spike train
 for i = 1:nPop
     yconvhi_all = [];
@@ -341,31 +341,21 @@ for i = 1:nPop
     end
 end
 sample_estimated_fr_pooling = fr_spmodel{2};
-sample_estimated_cppart_pooling = yconvhi_all*prs( (nBspline+2):(nBspline+nhbasis+1) , 2 );
+sample_estimated_cppart_pooling = yconvhi_all*prs( (nBspline+nhbasis*nn+2):(nBspline+nhbasis*(nn+1)+1) , 2 );
 %%
-theTrialToLookAt = 5;
-theTimeToLookAt = (theTrialToLookAt*T-T+301):(theTrialToLookAt*T-T+700);
+theTrialToLookAt = 1;
+theTimeToLookAt = (theTrialToLookAt*T-T+1):(theTrialToLookAt*T);
 figure(3)
-subplot(3,1,1)
-GroundTrueSpTrain = sum(all_y{1});
+subplot(2,1,1)
 hold on
-plot(theTimeToLookAt,GroundTrueSpTrain(theTimeToLookAt)/200);
-plot(theTimeToLookAt,fr{1}(theTimeToLookAt));
-plot(theTimeToLookAt,y_smooth{1}(theTimeToLookAt));
-plot(theTimeToLookAt,y{1}(theTimeToLookAt)/30);
-plot(theTimeToLookAt,pooling(theTimeToLookAt)/600);
-subplot(3,1,2)
+plot(1:T,fr{1}(theTimeToLookAt));
+plot(1:T,y_smooth{1}(theTimeToLookAt));
+plot(1:T,y{1}(theTimeToLookAt)/30);
+plot(1:T,pooling(theTimeToLookAt)/600);
+subplot(2,1,2)
 hold on
-plot(theTimeToLookAt,fr{2}(theTimeToLookAt));
-plot(theTimeToLookAt,sample_estimated_fr_sm(theTimeToLookAt));
-plot(theTimeToLookAt,sample_estimated_fr_raw(theTimeToLookAt));
-plot(theTimeToLookAt,sample_estimated_fr_pooling(theTimeToLookAt));
-subplot(3,1,3)
-hold on
-plot(theTimeToLookAt,20*fr{2}(theTimeToLookAt)-baselinefr);
-plot(theTimeToLookAt,sample_estimated_cppart_sm(theTimeToLookAt));
-plot(theTimeToLookAt,sample_estimated_cppart_raw(theTimeToLookAt));
-plot(theTimeToLookAt,sample_estimated_cppart_pooling(theTimeToLookAt));
-
-
+plot(1:T,fr{2}(theTimeToLookAt));
+plot(1:T,sample_estimated_fr_sm(theTimeToLookAt));
+plot(1:T,sample_estimated_fr_raw(theTimeToLookAt));
+plot(1:T,sample_estimated_fr_pooling(theTimeToLookAt));
 legend('Ground true','sm','raw','pooling');
