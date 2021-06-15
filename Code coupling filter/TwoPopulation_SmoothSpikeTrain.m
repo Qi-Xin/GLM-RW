@@ -1,7 +1,7 @@
 clearvars;
 rng(1);
 
-addpath(genpath('D:/code'))
+addpath(genpath('D:/Github/GLM-RW'))
 nPop = 2;     % number of neuron population
 nNeu = 1e2;    % number of neuons in a population
 rec_nNeu = 1e0;      % number of neurons recorded in each population
@@ -206,6 +206,7 @@ for i = 1:nPop
         end
     end
 end
+sample_estimated_cp_sm = cp_spmodel{2,1};
 sample_estimated_fr_sm = fr_spmodel{2};
 sample_estimated_cppart_sm = yconvhi_all*prs( (nBspline+2):(nBspline+nhbasis+1) , 2 );
 %% Raw spike train
@@ -272,6 +273,7 @@ for i = 1:nPop
         end
     end
 end
+sample_estimated_cp_raw = cp_spmodel{2,1};
 sample_estimated_fr_raw = fr_spmodel{2};
 sample_estimated_cppart_raw = yconvhi_all*prs( (nBspline+2):(nBspline+nhbasis+1) , 2 );
 %% Pooling spike train
@@ -340,16 +342,82 @@ for i = 1:nPop
         end
     end
 end
+
+    
+sample_estimated_cp_pooling = cp_spmodel{2,1};
 sample_estimated_fr_pooling = fr_spmodel{2};
 sample_estimated_cppart_pooling = yconvhi_all*prs( (nBspline+2):(nBspline+nhbasis+1) , 2 );
+
+%%
+theTrialToLookAt = 5;
+theTimeToLookAt = (theTrialToLookAt*T-T+301):(theTrialToLookAt*T-T+700);
+figure(4)
+subplot(4,3,1)
+GroundTrueSpTrain = all_y{1}(:,theTimeToLookAt);
+plotraster(GroundTrueSpTrain,1:400,'Simulated Result');
+title('Ground true input spike train');
+subplot(4,3,2)
+plot(cp_true{2,1},'-k','LineWidth',1.5);
+title('Ground true coupling filter');
+subplot(4,3,3)
+plot(theTimeToLookAt,fr{2}(theTimeToLookAt),'-k','LineWidth',1.5);
+title('Ground true firing rate');
+
+subplot(4,3,4)
+SpTrain = y{1}(theTimeToLookAt);
+plotraster(SpTrain',1:400,'Simulated Result');
+title('Raw spike train recorded');
+subplot(4,3,5)
+k = sample_estimated_cp_raw(:,2);
+kL = sample_estimated_cp_raw(:,1);
+kU = sample_estimated_cp_raw(:,3);
+fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')], ...
+    'b','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
+hold on
+plot(k,'-b','LineWidth',1);
+title('Raw spike train estimation of coupling filter ');
+subplot(4,3,6)
+plot(theTimeToLookAt,sample_estimated_fr_raw(theTimeToLookAt),'-b','LineWidth',1.5);
+title('Raw spike train estimation of firing rate');
+
+subplot(4,3,7)
+plot(theTimeToLookAt,y_smooth{1}(theTimeToLookAt),'-k','LineWidth',1.5);
+title('Smoothed spike train');
+subplot(4,3,8)
+k = sample_estimated_cp_sm(:,2);
+kL = sample_estimated_cp_sm(:,1);
+kU = sample_estimated_cp_sm(:,3);
+fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')], ...
+    'r','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
+hold on
+plot(k,'-r','LineWidth',1);
+title('Smoothed spike train estimation of coupling filter ');
+subplot(4,3,9)
+plot(theTimeToLookAt,sample_estimated_fr_sm(theTimeToLookAt),'-r','LineWidth',1.5);
+title('Smoothed spike train estimation of firing rate');
+
+subplot(4,3,10)
+plot(theTimeToLookAt,pooling(theTimeToLookAt),'-k','LineWidth',1.5);
+title('Pooled spike train');
+subplot(4,3,11)
+k = sample_estimated_cp_pooling(:,2);
+kL = sample_estimated_cp_pooling(:,1);
+kU = sample_estimated_cp_pooling(:,3);
+fill([(1:length(k)) fliplr(1:length(k))],[kL' fliplr(kU')], ...
+    'g','facealpha',0.2,'edgealpha',0,'HandleVisibility','off');
+hold on
+plot(k,'-g','LineWidth',1);
+title('Pooled spike train estimation of coupling filter ');
+subplot(4,3,12)
+plot(theTimeToLookAt,sample_estimated_fr_pooling(theTimeToLookAt),'-g','LineWidth',1.5);
+title('Pooled spike train estimation of firing rate');
+
 %%
 theTrialToLookAt = 5;
 theTimeToLookAt = (theTrialToLookAt*T-T+301):(theTrialToLookAt*T-T+700);
 figure(3)
 subplot(3,1,1)
-GroundTrueSpTrain = sum(all_y{1});
 hold on
-plot(theTimeToLookAt,GroundTrueSpTrain(theTimeToLookAt)/200);
 plot(theTimeToLookAt,fr{1}(theTimeToLookAt));
 plot(theTimeToLookAt,y_smooth{1}(theTimeToLookAt));
 plot(theTimeToLookAt,y{1}(theTimeToLookAt)/30);
@@ -362,7 +430,7 @@ plot(theTimeToLookAt,sample_estimated_fr_raw(theTimeToLookAt));
 plot(theTimeToLookAt,sample_estimated_fr_pooling(theTimeToLookAt));
 subplot(3,1,3)
 hold on
-plot(theTimeToLookAt,20*fr{2}(theTimeToLookAt)-baselinefr);
+plot(theTimeToLookAt,fr{2}(theTimeToLookAt)-baselinefr);
 plot(theTimeToLookAt,sample_estimated_cppart_sm(theTimeToLookAt));
 plot(theTimeToLookAt,sample_estimated_cppart_raw(theTimeToLookAt));
 plot(theTimeToLookAt,sample_estimated_cppart_pooling(theTimeToLookAt));
