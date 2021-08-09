@@ -1,6 +1,6 @@
 clearvars;
 
-addpath(genpath('D:/code'))
+addpath(genpath('D:/Github/GLM-RW'))
 
 repnum = 3e3;
 maxSig = 7e-2;
