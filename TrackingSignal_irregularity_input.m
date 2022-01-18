@@ -35,17 +35,12 @@ I = repmat(I_per,1,repnum);
 I = I(1:tot_t) + 5e-2;
 I_noInp = zeros(1,tot_t);
 
-
-
 % Simulation
-
-
 y = zeros(1e3, 5e3);
 for i = 1:1e4
     [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(tau_E,tau_I,tau_M,V_E,V_I,a,b,V_th,V_reset,I,tot_t,dt);
     y(i,:) = full(y_sparse);
 end
-
 
 % Plot Raster
 T = 1e3;
@@ -57,7 +52,6 @@ plotraster(y(1:N,:),1:5e3,'Simulated Result');
 title('Spike train');
 xlabel('ms');
 ylabel('trial');
-
 
 % Tracking Signal
 subplot(2,1,2);
