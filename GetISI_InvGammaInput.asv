@@ -1,27 +1,35 @@
 function [ISI,spike_timing,y,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt,LB)
 
-a = p;
-b = q;
+mu = p;
+lambda = q;
 
 V = NaN*zeros(1,tot_t);
 V(1) = 0; 
 y = zeros(1,tot_t);
 spike_timing = [0];
 
-add = ceil(5*max([tau_E,tau_I,1e3/dt]));
+add = ceil(2*max([tau_E,tau_I,1e3/dt]));
+N_input = 100;
 
-
-while t<=tot_t+add
-    deltat = 1/gamrnd(a,b);
-    t = t + deltat;
-    rdmE(ceil(t)) = 1;
+rdmE = zeros(1,(tot_t + add));
+for i=1:N_input
+    interval = random('InverseGaussian',mu,lambda,ceil(3*(tot_t + add)/mu),1);
+    timing = cumsum(interval);
+    if (timing(end)<(tot_t + add))
+        
+    timing = timing(timing<(tot_t + add));
+    rdmE(ceil(timing)) = rdmE(ceil(timing))+1;
 end
 
-while t<=tot_t+add
-    deltat = 1/gamrnd(a,b);
-    t = t + deltat;
-    rdmI(ceil(t)) = 1;
+rdmI = zeros(1,(tot_t + add));
+for i=1:N_input
+    interval = random('InverseGaussian',mu,lambda,ceil(3*(tot_t + add)/mu),1);
+    timing = cumsum(interval);
+    assert(timing(end)>(tot_t + add));
+    timing = timing(timing<(tot_t + add));
+    rdmI(ceil(timing)) = rdmI(ceil(timing))+1;
 end
+
 
 inputE = zeros(1,tot_t + add);
 inputI = zeros(1,tot_t + add);
@@ -35,9 +43,27 @@ for t = 2:( tot_t + add )
     inputE(t) = inputE(t) + V_E*rdmE(t);
     inputI(t) = inputI(t) + V_I*rdmI(t);
 end
+
+
+v = 0;
+for t = 2:add
+    if v>=V_th
+        spike_timing = [spike_timing,t-1];
+        v = V_reset;
+        continue
+    end
+    
+    v = v*exp(-dt/tau_M);
+    v = v + inputE(t) - inputI(t);
+    
+    if v<= LB
+        v = LB;
+    end
+    
+end
 inputE = inputE( (add+1) :end);
 inputI = inputI( (add+1) :end);
-sum(inputE)
+V(1) = v;
 for t = 2:tot_t
     if V(t-1)>=V_th
         spike_timing = [spike_timing,t-1];
