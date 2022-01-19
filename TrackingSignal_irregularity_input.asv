@@ -81,10 +81,11 @@ ylabel('Signal');
 
 
 %% tracking accuracy of different CVs
-ratio_list = 0.1:0.3:1.9 ;
+ratio_list = [0.01,0.1,0.2,0.3,0.4:0.3:1.9] ;
 n_rep = 3;
 result = zeros(n_rep, length(ratio_list));
 cv_output = zeros(1,length(ratio_list));
+% I = I+1e-2;
 for i=1:length(ratio_list)
     ratio = ratio_list(i);
     mu = 20;
@@ -94,9 +95,8 @@ for i=1:length(ratio_list)
         [i,j]
         cv = sqrt(mu/lambda);
         y = zeros(1e3, 1e3);
-        for ii = 1:1e3
+        parfor ii = 1:1e3
             [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
-            isi_rec = [isi_rec,ISI];
             y(ii,:) = full(y_sparse);
         end
         fr = sum(y)/tot_N;
@@ -106,8 +106,11 @@ for i=1:length(ratio_list)
         SS = sum(yresid.^2);
         result(j,i) = SS;
     end
+    [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
+    isi_rec = ISI;
     cv_output(i) = sqrt(var(isi_rec))/mean(isi_rec);
 end
+
 %% 
 figure
 hold on
@@ -117,3 +120,4 @@ xlabel('CV of input spike trains');
 ylabel('Tracking ability (as sum of residual)');
 yyaxis right
 plot(ratio_list, cv_output);
+legend('Tracking accuracy', 'CV of output spike trains');

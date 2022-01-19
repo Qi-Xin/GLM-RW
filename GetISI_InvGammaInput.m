@@ -53,7 +53,6 @@ end
 v = 0;
 for t = 2:add
     if v>=V_th
-        spike_timing = [spike_timing,t-1];
         v = V_reset;
         continue
     end
