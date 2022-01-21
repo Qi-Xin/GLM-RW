@@ -88,6 +88,7 @@ ylabel('Signal');
 figure
 edge = [0:10:5e2];
 histogram(isi_rec,edge,'Normalization','probability');
+ylim([0 0.5]);
 title(['Histogram (num of input neuron=',num2str(N_input),') (input CV = ',num2str(ratio),')' ]);
 xlabel('ISI (ms)');
 ylabel('probability');
