@@ -39,13 +39,16 @@ I_noInp = zeros(1,tot_t);
 % Simulation
 N_input = 100;
 mu = 20;
-ratio = 1;
+ratio = 0.05;
 lambda = 1./ratio^2*mu;
 cv = sqrt(lambda/mu);
 y = zeros(1e3, 1e3);
+isi_rec = [];
 for i = 1:1e3
-    [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
+    [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(...
+        N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
     y(i,:) = full(y_sparse);
+    isi_rec = [isi_rec, ISI];
 end
 
 % Plot Raster
@@ -55,7 +58,7 @@ N = 100;
 figure
 subplot(2,1,1);
 plotraster(y(1:N,:),1:1e3,'Simulated Result');
-title('Spike train');
+title(['Spike train (num of input neuron=',num2str(N_input),') (input CV = ',num2str(ratio),')' ]);
 xlabel('ms');
 ylabel('trial');
 
@@ -82,18 +85,26 @@ axis([0 1000 0 0.10]);
 xlabel('t');
 ylabel('Signal');
 
+figure
+edge = [0:10:5e2];
+histogram(isi_rec,edge,'Normalization','probability');
+title(['Histogram (num of input neuron=',num2str(N_input),') (input CV = ',num2str(ratio),')' ]);
+xlabel('ISI (ms)');
+ylabel('probability');
 
 %% tracking accuracy of different CVs
 ratio_list = [0.05,0.1,0.2,0.3,0.4:0.3:1.9] ;
+ratio_list = [0.1,0.2,0.3,0.4:0.3:1.9] ;
 n_rep = 5;
 result = zeros(n_rep, length(ratio_list));
 cv_output = zeros(1,length(ratio_list));
 fr_base = zeros(1,length(ratio_list));
 tot_N = 1e3;
 % I = I+1e-2;
+N_input = 30;
 
 for i=1:length(ratio_list)
-    N_input = 100;
+    
     ratio = ratio_list(i);
     mu = 20;
     lambda = 1./ratio^2*mu;
@@ -103,7 +114,8 @@ for i=1:length(ratio_list)
         y = zeros(1e3, 1e3);
         y_sparse = {};
         parfor ii = 1:1e3
-            [~,~,y_sparse{ii},~,~,~] = GetISI_InvGammaInput(N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
+            [~,~,y_sparse{ii},~,~,~] = GetISI_InvGammaInput(...
+                N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
             y(ii,:) = full(y_sparse{ii});
         end
         fr = sum(y)/tot_N;
@@ -117,15 +129,17 @@ for i=1:length(ratio_list)
     isi_rec = [];
     epoch = 0;
     while true
-        [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
+        [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(...
+            N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
         isi_rec = [isi_rec, ISI];
-        epoch =+ 1;
-        if length(isi_rec)>=1e3
+        epoch = epoch + 1;
+        if (length(isi_rec)>=1e4) | (epoch>=1000 & length(isi_rec)>=2e1)
             fr_base(i) = length(isi_rec)/epoch/1e3;
             break
         end
     end
     cv_output(i) = sqrt(var(isi_rec))/mean(isi_rec);
+    length(isi_rec)
 end
 
 %% 
@@ -134,16 +148,22 @@ subplot(3,1,1)
 hold on
 % yyaxis left
 errorbar(ratio_list, mean(result), var(result)/sqrt(n_rep),'horizontal');
-xlabel('CV of input spike trains');
-ylabel('Tracking ability (as sum of residual)');
-legend(['Tracking accuracy (num of input neuron=',num2str(N_input),')']);
+
+ylabel('Tracking ability');
+title('Tracking accuracy (as sum of residual)');
+legend(['num of input neuron=',num2str(N_input)]);
 
 subplot(3,1,2)
 % yyaxis right
 plot(ratio_list, cv_output);
-legend(['CV of output spike trains (num of input neuron=',num2str(N_input),')']);
+title('CV of output spike trains');
+ylabel('CV');
+legend(['num of input neuron=',num2str(N_input)]);
 
 subplot(3,1,3)
 % yyaxis right
 plot(ratio_list, fr_base);
-legend(['Baseline firing rate (num of input neuron=',num2str(N_input),')']);
+title('Baseline firing rate');
+ylabel('FR');
+legend(['num of input neuron=',num2str(N_input)]);
+xlabel('CV of input spike trains');

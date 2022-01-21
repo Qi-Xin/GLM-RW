@@ -6,7 +6,7 @@ lambda = q;
 V = NaN*zeros(1,tot_t);
 V(1) = 0; 
 y = zeros(1,tot_t);
-spike_timing = [0];
+spike_timing = [];
 
 add = ceil(2*max([tau_E,tau_I,1e3/dt]));
 
