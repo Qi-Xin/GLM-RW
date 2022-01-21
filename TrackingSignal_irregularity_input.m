@@ -37,16 +37,16 @@ I_noInp = zeros(1,tot_t);
 
 %%
 % Simulation
-N_input = 100;
+N_input = 30;
 mu = 20;
-ratio = 0.05;
+ratio = 1.0;
 lambda = 1./ratio^2*mu;
 cv = sqrt(lambda/mu);
 y = zeros(1e3, 1e3);
 isi_rec = [];
 for i = 1:1e3
     [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(...
-        N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
+        N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
     y(i,:) = full(y_sparse);
     isi_rec = [isi_rec, ISI];
 end

@@ -37,9 +37,9 @@ I_noInp = zeros(1,tot_t);
 
 %%
 % Simulation
-N_input = 100;
+N_input = 30;
 mu = 20;
-ratio = 0.05;
+ratio = 1.0;
 lambda = 1./ratio^2*mu;
 cv = sqrt(lambda/mu);
 y = zeros(1e3, 1e3);
@@ -86,10 +86,11 @@ xlabel('t');
 ylabel('Signal');
 
 figure
-edge = [0:10:4e3];
-histogram(isi_rec,'Normalization','probability');
+edge = [0:10:5e2];
+histogram(isi_rec,edge,'Normalization','probability');
+ylim([0 0.5]);
 title(['Histogram (num of input neuron=',num2str(N_input),') (input CV = ',num2str(ratio),')' ]);
-xlabel('ISI');
+xlabel('ISI (ms)');
 ylabel('probability');
 
 %% tracking accuracy of different CVs
