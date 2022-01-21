@@ -35,13 +35,16 @@ I = repmat(I_per,1,repnum);
 I = I(1:tot_t);
 I_noInp = zeros(1,tot_t);
 
+%%
 % Simulation
+N_input = 100;
 mu = 20;
-lambda = 0.2*mu;
+ratio = 1;
+lambda = 1./ratio^2*mu;
 cv = sqrt(lambda/mu);
 y = zeros(1e3, 1e3);
 for i = 1:1e3
-    [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
+    [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
     y(i,:) = full(y_sparse);
 end
 
@@ -81,23 +84,27 @@ ylabel('Signal');
 
 
 %% tracking accuracy of different CVs
-ratio_list = [0.01,0.1,0.2,0.3,0.4:0.3:1.9] ;
-n_rep = 3;
+ratio_list = [0.05,0.1,0.2,0.3,0.4:0.3:1.9] ;
+n_rep = 5;
 result = zeros(n_rep, length(ratio_list));
 cv_output = zeros(1,length(ratio_list));
+fr_base = zeros(1,length(ratio_list));
+tot_N = 1e3;
 % I = I+1e-2;
+
 for i=1:length(ratio_list)
+    N_input = 100;
     ratio = ratio_list(i);
     mu = 20;
     lambda = 1./ratio^2*mu;
-    isi_rec = [];
     for j=1:n_rep
         [i,j]
         cv = sqrt(mu/lambda);
         y = zeros(1e3, 1e3);
+        y_sparse = {};
         parfor ii = 1:1e3
-            [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
-            y(ii,:) = full(y_sparse);
+            [~,~,y_sparse{ii},~,~,~] = GetISI_InvGammaInput(N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I,tot_t,dt);
+            y(ii,:) = full(y_sparse{ii});
         end
         fr = sum(y)/tot_N;
         p = polyfit(fr, I_per,1);
@@ -106,18 +113,37 @@ for i=1:length(ratio_list)
         SS = sum(yresid.^2);
         result(j,i) = SS;
     end
-    [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
-    isi_rec = ISI;
+    % sample ISIs during no stimulus
+    isi_rec = [];
+    epoch = 0;
+    while true
+        [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI_InvGammaInput(N_input,tau_E,tau_I,tau_M,V_E,V_I,mu,lambda,V_th,V_reset,I_noInp,tot_t,dt);
+        isi_rec = [isi_rec, ISI];
+        epoch =+ 1;
+        if length(isi_rec)>=1e3
+            fr_base(i) = length(isi_rec)/epoch/1e3;
+            break
+        end
+    end
     cv_output(i) = sqrt(var(isi_rec))/mean(isi_rec);
 end
 
 %% 
 figure
+subplot(3,1,1)
 hold on
-yyaxis left
+% yyaxis left
 errorbar(ratio_list, mean(result), var(result)/sqrt(n_rep),'horizontal');
 xlabel('CV of input spike trains');
 ylabel('Tracking ability (as sum of residual)');
-yyaxis right
+legend(['Tracking accuracy (num of input neuron=',num2str(N_input),')']);
+
+subplot(3,1,2)
+% yyaxis right
 plot(ratio_list, cv_output);
-legend('Tracking accuracy', 'CV of output spike trains');
+legend(['CV of output spike trains (num of input neuron=',num2str(N_input),')']);
+
+subplot(3,1,3)
+% yyaxis right
+plot(ratio_list, fr_base);
+legend(['Baseline firing rate (num of input neuron=',num2str(N_input),')']);

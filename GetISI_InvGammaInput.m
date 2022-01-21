@@ -1,4 +1,4 @@
-function [ISI,spike_timing,y,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt,LB)
+function [ISI,spike_timing,y,V,inputE,inputI] = GetISI(N_input,tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt,LB)
 
 mu = p;
 lambda = q;
@@ -9,7 +9,6 @@ y = zeros(1,tot_t);
 spike_timing = [0];
 
 add = ceil(2*max([tau_E,tau_I,1e3/dt]));
-N_input = 100;
 
 rdmE = zeros(1,(tot_t + add));
 for i=1:N_input
