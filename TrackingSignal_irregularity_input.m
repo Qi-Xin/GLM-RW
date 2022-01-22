@@ -102,7 +102,9 @@ cv_output = zeros(1,length(ratio_list));
 fr_base = zeros(1,length(ratio_list));
 tot_N = 1e3;
 % I = I+1e-2;
-N_input = 30;
+N_input = 1e3;
+V_E = 0.02;
+V_I = 0.02;
 
 for i=1:length(ratio_list)
     
