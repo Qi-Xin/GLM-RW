@@ -239,7 +239,8 @@ xlabel('t');
 ylabel('Signal');
 
 %% tracking accuracy of different CVs under Poisson input
-p_list = 50*[10:10:100,120:20:200]/1e3;
+p_list = 50*[10:10:100,120:20:300]/1e3;
+p_list = logspace(-1.3,4,20)/50;
 n_rep = 5;
 result = zeros(n_rep, length(p_list));
 cv_output = zeros(1,length(p_list));

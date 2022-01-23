@@ -72,11 +72,17 @@ for ii = 1:length(p_list)
         %baseline = mean(target(1:200));
         %fun = @(k) sum(((target-baseline)*k - groundTrue).^2)
         %x0 = 1;
-        fun = @(k) sum(((target-k(2))*k(1) - groundTrue).^2)
+        fun = @(k) sum(((target-k(2))*k(1) - groundTrue).^2);
         x0 = [1,0.2];
         [x,fval] = fminunc(fun,x0);
         IMSE_raw(ii,jj) = fval;
         
+        poly = polyfit(target, groundTrue,1);
+        yfit = polyval(poly,target);
+        yresid = I_per - yfit;
+        SS = sum(yresid.^2);
+        IMSE_raw(ii,jj) = SS;
+        %{
         SNR_indirect_raw(ii,jj) = var(mean(ST)) / mean(var(ST));
         SNR_indirect_baseline_raw(ii,jj) = var(mean(ST(:,201:800))) / mean(var(ST(:,[1:200,801:1000])));
         SNR_indirect_Lesica_raw(ii,jj) = var(mean(ST)) / mean( var( (ST-mean(ST))' )' );
@@ -154,7 +160,9 @@ for ii = 1:length(p_list)
 
         SNR_KL_full_raw(ii,jj) = SNR_glmS;
         SNR_KL_woH_raw(ii,jj) = SNR_glmS2;
+        %}
     end
+        
 end
 %%
 figure;
