@@ -84,6 +84,11 @@ for t = 2:tot_t
     
 end
 
+if V(t)>=V_th
+    spike_timing = [spike_timing,t];
+    y(t) = 1;
+end
+
 ISI = diff(spike_timing);
 y = sparse(y);
 
