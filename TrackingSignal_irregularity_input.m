@@ -37,9 +37,11 @@ I_noInp = zeros(1,tot_t);
 
 %%
 % Simulation
+V_E = 0.08;
+V_I = V_E;
 N_input = 30;
 mu = 20;
-ratio = 1.0;
+ratio = 0.8;
 lambda = 1./ratio^2*mu;
 cv = sqrt(lambda/mu);
 y = zeros(1e3, 1e3);
@@ -175,13 +177,16 @@ xlabel('CV of input spike trains');
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% BELOW ARE POISSON %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-p = 50 *50/1e3;
+p = 300 *50/1e3;
 q = p;
+tot_N = 1e3;
+V_E = 0.02;
+V_I = V_E;
 
 cv = 1;
 y = zeros(1e3, 1e3);
 y_sparse = {};
-for ii = 1:1e3
+for ii = 1:tot_N
     [~,~,y_sparse{ii},~,~,~] = GetISI(...
         tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
     y(ii,:) = full(y_sparse{ii});
@@ -211,7 +216,7 @@ length(isi_rec)
 figure
 subplot(2,1,1);
 plotraster(y(1:N,:),1:1e3,'Simulated Result');
-title(['Spike train (num of input neuron=',num2str(N_input),') (input CV = ',num2str(ratio),')' ]);
+title(['Spike train (num of input neuron=',num2str(N_input),') (Poisson input, input CV = 1)' ]);
 xlabel('ms');
 ylabel('trial');
 
@@ -240,7 +245,7 @@ ylabel('Signal');
 
 %% tracking accuracy of different CVs under Poisson input
 p_list = 50*[10:10:100,120:20:300]/1e3;
-p_list = logspace(-1.3,4,20)/50;
+p_list = logspace(-1.3,4,20);
 n_rep = 5;
 result = zeros(n_rep, length(p_list));
 cv_output = zeros(1,length(p_list));
@@ -251,21 +256,23 @@ N_input = 1e3;
 V_E = 0.02;
 V_I = V_E;
 
+tot_t = 1e6;
+repnum = ceil(tot_t/length(I_per));
+I_multi = repmat(I_per,1,repnum);
+
 for i=1:length(p_list)
     p = p_list(i);
     q = p;
     mu = 20;
-    lambda = 1./ratio^2*mu;
     for j=1:n_rep
         [i,j]
-        cv = sqrt(mu/lambda);
-        y = zeros(1e3, 1e3);
-        y_sparse = {};
-        parfor ii = 1:1e3
-            [~,~,y_sparse{ii},~,~,~] = GetISI(...
-                tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt);
-            y(ii,:) = full(y_sparse{ii});
-        end
+
+        [ISI,spike_timing,y_sparse,V,inputE,inputI] = ... 
+            GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I_multi,tot_t,dt);
+        y = full(y_sparse);
+        ST = (reshape(y,[],tot_N)');
+        y = ST;
+        
         fr = sum(y)/tot_N;
         poly = polyfit(fr, I_per,1);
         yfit = polyval(poly,fr);
@@ -278,10 +285,10 @@ for i=1:length(p_list)
     epoch = 0;
     while true
         [ISI,spike_timing,y_sparse,V,inputE,inputI] = GetISI(...
-            tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I_noInp,tot_t,dt);
+            tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,repmat(I_noInp,1,repnum),tot_t,dt);
         isi_rec = [isi_rec, ISI];
         epoch = epoch + 1;
-        if (length(isi_rec)>=1e4) | ((epoch>=1000 & length(isi_rec)>=2e1)) | epoch>=1e4
+        if (length(isi_rec)>=1e4) | ((epoch>=1000 & length(isi_rec)>=2e1)) | epoch>=1e1
             fr_base(i) = length(isi_rec)/epoch/1e3;
             break
         end
