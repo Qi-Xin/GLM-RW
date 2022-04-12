@@ -129,7 +129,7 @@ if adjStepOrNot == 1
 end
 %% Simulation
 [ISI,spike_timing,y_sparse,V,inputE,inputI,p_varying,q_varying] = ...
-GetISI_VaryingNoise(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt,[16,16],[-1,0.1]);
+GetISI_VaryingNoise(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt,[5,5],[-1,0.1]);
 %{
 [100,100],[0,0]
 

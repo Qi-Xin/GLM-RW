@@ -6,23 +6,9 @@ y = zeros(1,tot_t);
 spike_timing = [];
 add = ceil(5*max([tau_E,tau_I,1e3/dt]));
 
-if amp_osi(1)==0
-    p_varying = p * (1 + amp_osi(1)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(1)-pi));
-    q_varying = p * (1 + amp_osi(2)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(2)-pi));
-elseif amp_osi(1)==-1
-    amp_osi(1) = amp_osi(2);
-    random_phase = 2*pi*rand(1,(tot_t+add)/1e3);
-    random_phase = repmat(random_phase,1e3,1);
-    random_phase = reshape(random_phase,1,(tot_t+add));
-    p_varying = p * (1 + amp_osi(1)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(1)+random_phase));
-    random_phase = 2*pi*rand(1,(tot_t+add)/1e3);
-    random_phase = repmat(random_phase,1e3,1);
-    random_phase = reshape(random_phase,1,(tot_t+add));
-    q_varying = p * (1 + amp_osi(2)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(2)+random_phase));
-else
-    p_varying = p * (1 + amp_osi(1)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(1)));
-    q_varying = p * (1 + amp_osi(2)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(2)));
-end
+if 
+p_varying = p * (1 + amp_osi(1)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(1)-pi));
+q_varying = p * (1 + amp_osi(2)*cos( 2*pi* ((1:(tot_t+add))-323-add) /tau_osi(2)-pi));
 
 
 rdmE = random('poisson',p_varying);
