@@ -1,5 +1,5 @@
 function [ISI,spike_timing,y,V,inputE,inputI] = GetISI(tau_E,tau_I,tau_M,V_E,V_I,p,q,V_th,V_reset,I,tot_t,dt)
-
+ 
 V = NaN*zeros(1,tot_t);
 V(1) = 0; 
 y = zeros(1,tot_t);
