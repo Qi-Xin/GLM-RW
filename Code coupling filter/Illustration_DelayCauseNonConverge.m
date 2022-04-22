@@ -3,31 +3,31 @@
 clearvars;
 
 len = 5;
-X = [1;1;1;0;1];
-Y = [0;1;1;0;1];
-C1 = [1];
+Y1 = [1;1;1;0;1];
+Y2 = [0;1;1;0;1];
+C1 = [1];   % Coupling filter is very simple, just consider one time bin back
 
 max_iter = 1e2;
-x_rcd = zeros(len,max_iter);
-y_rcd = zeros(len,max_iter);
-x = X;
-y = Y;
+log_fr_1_rcd = zeros(len,max_iter);   % "rcd" means "record"
+log_fr_2_rcd = zeros(len,max_iter);
 para_rcd = zeros(4,2*max_iter);
 tempy = [0;0];
 tempx = [0;0];
-x = zeros(len,1);
-y = zeros(len,1);
+
+% Initialization
+log_fr_1 = zeros(len,1);
+log_fr_2 = zeros(len,1);
 
 for iter = 1:max_iter
-    tempy = glmfit([sameconv(x,C1)],Y,'poisson');
-    y = sameconv(x,C1)*tempy(2)+tempy(1);
-    y_rcd(:,iter) = y;
+    tempy = glmfit([sameconv(log_fr_1,C1)],Y2,'poisson');
+    log_fr_2 = sameconv(log_fr_1,C1)*tempy(2)+tempy(1);
+    log_fr_2_rcd(:,iter) = log_fr_2;
     
     para_rcd(:,2*iter-1) = [tempy;tempx];
     
-    tempx = glmfit([sameconv(y,C1)],X,'poisson');
-    x = sameconv(y,C1)*tempx(2)+tempx(1);
-    x_rcd(:,iter) = x;
+    tempx = glmfit([sameconv(log_fr_2,C1)],Y1,'poisson');
+    log_fr_1 = sameconv(log_fr_2,C1)*tempx(2)+tempx(1);
+    log_fr_1_rcd(:,iter) = log_fr_1;
     
     para_rcd(:,2*iter) = [tempy;tempx];
 
