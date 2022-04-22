@@ -1,225 +1,71 @@
-% This code illustrates the "don't converge" problem: forced causality -
-% delay is responsible for it. 
+% This code illustrates the "don't converge" problem
 
 clearvars;
-addpath(genpath('D:/github/GLM-RW'))
-X = [0.7;5;0.6];
-Y = [2;1;4.5];
+
+len = 5;
+X = [1;1;1;0;1];
+Y = [0;1;1;0;1];
 C1 = [1];
 
 max_iter = 1e2;
-x_rcd = zeros(3,max_iter);
-y_rcd = zeros(3,max_iter);
+x_rcd = zeros(len,max_iter);
+y_rcd = zeros(len,max_iter);
 x = X;
 y = Y;
+para_rcd = zeros(4,2*max_iter);
+tempy = [0;0];
+tempx = [0;0];
+x = zeros(len,1);
+y = zeros(len,1);
+
 for iter = 1:max_iter
-    temp = regress(Y, [[1;1;1],sameconv(x,C1)]);
-    y = [[1;1;1],sameconv(x,C1)]*temp;
+    tempy = glmfit([sameconv(x,C1)],Y,'poisson');
+    y = sameconv(x,C1)*tempy(2)+tempy(1);
     y_rcd(:,iter) = y;
-    temp = regress(X, [[1;1;1],sameconv(y,C1)]);
-    x = [[1;1;1],sameconv(y,C1)]*temp;
+    
+    text1 = ['After doing iteration ',num2str(iter),', optimizing over \beta_2 and k_12, we get'];
+    disp(text1)
+    text2 = 'log lambda_2 =';
+	disp(text2)
+    expy = exp(y');
+    disp([num2str(expy(1),'%4.2f'),',',num2str(expy(2),'%4.2f'),',',num2str(expy(3),'%4.2f'),',',num2str(expy(4),'%4.2f')])
+    para_rcd(:,2*iter-1) = [tempy;tempx];
+    
+    tempx = glmfit([sameconv(y,C1)],X,'poisson');
+    x = sameconv(y,C1)*tempx(2)+tempx(1);
     x_rcd(:,iter) = x;
+    
+    text1 = ['After doing iteration ',num2str(iter),', optimizing over \beta_1 and k_21, we get'];
+    disp(text1)
+    text2 = 'log lambda_1 =';
+	disp(text2)
+    expx = exp(x');
+    disp([num2str(expx(1),'%4.2f'),',',num2str(expx(2),'%4.2f'),',',num2str(expx(3),'%4.2f'),',',num2str(expx(4),'%4.2f')])
+    para_rcd(:,2*iter) = [tempy;tempx];
+
 end
-%% 
+
 figure;
 hold on
-mycolor = linspace(0,1,7);
-for iter = 1:7
-    temp = x_rcd(:,iter);
-    hx{iter} = plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'*-','linewidth',2,'color',[mycolor(iter) 0 1-mycolor(iter)]);
-    mylgd{iter} = ['x',num2str(iter)];
-end
-iter = iter+1;
-temp = X;
-hx{iter} = plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'k*-','linewidth',3);
-mylgd{iter} = 'X';
-legend(mylgd);
-view(3)
-grid on
-%%
-figure;
-hold on
-mycolor = linspace(0,1,7);
-for iter = 1:7
-    temp = y_rcd(:,iter);
-    hy{iter} =plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'*-','linewidth',2,'color',[mycolor(iter) 0 1-mycolor(iter)]);
-    mylgd{iter} = ['y',num2str(iter)];
-end
-iter = iter+1;
-temp = Y;
-hx{iter} = plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'k*-','linewidth',3);
-mylgd{iter} = 'Y';
-legend(mylgd);
-view(3)
-grid on
-%%
-figure;
-subplot(2,1,1)
-hold on
-plot(x_rcd');
-title('x^{(i)}');
-legend('x_1^{(i)}','x_2^{(i)}','x_3^{(i)}');
+plot((1:(2*max_iter))/2, para_rcd', '-');
+title('Parameters');
+legend('\beta_2','k_{12}','\beta_1','k_{21}');
 xlabel('iteration (i)');
-subplot(2,1,2)
-hold on
-plot(y_rcd');
-title('y^{(i)}');
-legend('y_1^{(i)}','y_2^{(i)}','y_3^{(i)}');
-xlabel('iteration (i)');
-%%
 
-% Show getting y from x and constant
-iter = 90;
-figure
-hold on
 
-% old x
-temp = x_rcd(:,iter-1);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'bo-','linewidth',1.5);
+function G = sameconv(A, B)
+    %  G = sameconv(A, B);
+    %   
+    %  Causally filters A with B, giving a column vector with same height as
+    %  A.  (B not flipped as in standard convolution).
+    %
+    %  Convolution performed efficiently in (zero-padded) Fourier domain.
+    B = [0;B];
 
-% convolution with old x
-temp = sameconv(x_rcd(:,iter-1),C1);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'c*-','linewidth',1.5);
+    [am, an] = size(A);
+    [bm, bn] = size(B);
+    nn = am+bm-1;
 
-% constant
-temp = [1;1;1];
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'g*-','linewidth',1.5);
-
-% target Y
-temp = Y;
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'kx-','linewidth',1.5);
-
-% new y
-temp = y_rcd(:,iter);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'ro-','linewidth',1.5);
-
-v1 = [1;1;1];
-v2 = sameconv(x_rcd(:,iter-1),C1);
-fill3( [0,v1(1),v1(1)+v2(1),v2(1)] , [0,v1(2),v1(2)+v2(2),v2(2)] ,[0,v1(3),v1(3)+v2(3),v2(3)],'r','FaceAlpha',0.3, ...
-    'EdgeAlpha',0);
-grid on
-
-legend('x','convolution of x and C','bias','target Y','fitted y','plane of bias and convolution');
-title('Getting y of the 11 th iteration')
-view(3);
-xlim([0 3]);
-ylim([0 6]);
-zlim([0 5]);
-%%
-
-% Show getting x from y and constant
-iter = 90;
-figure
-hold on
-
-% old y
-temp = y_rcd(:,iter);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'bo-','linewidth',1.5);
-
-% convolution with old y
-temp = sameconv(y_rcd(:,iter),C1);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'c*-','linewidth',1.5);
-
-% constant
-temp = [1;1;1];
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'g*-','linewidth',1.5);
-
-% target X
-temp = X;
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'kx-','linewidth',1.5);
-
-% new x
-temp = x_rcd(:,iter);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'ro-','linewidth',1.5);
-
-v1 = [1;1;1];
-v2 = sameconv(y_rcd(:,iter),C1);
-fill3( [0,v1(1),v1(1)+v2(1),v2(1)] , [0,v1(2),v1(2)+v2(2),v2(2)] ,[0,v1(3),v1(3)+v2(3),v2(3)],'r','FaceAlpha',0.3, ...
-    'EdgeAlpha',0);
-grid on
-
-legend('y','convolution of y and C','bias','target X','fitted x','plane of bias and convolution');
-title('Getting x of the 11 th iteration')
-view(3);
-xlim([0 3]);
-ylim([0 6]);
-zlim([0 5]);
-%%
-
-% Show getting y from x and constant
-iter = 91;
-figure
-hold on
-
-% old x
-temp = x_rcd(:,iter-1);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'bo-','linewidth',1.5);
-
-% convolution with old x
-temp = sameconv(x_rcd(:,iter-1),C1);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'c*-','linewidth',1.5);
-
-% constant
-temp = [1;1;1];
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'g*-','linewidth',1.5);
-
-% target Y
-temp = Y;
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'kx-','linewidth',1.5);
-
-% new y
-temp = y_rcd(:,iter);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'ro-','linewidth',1.5);
-
-v1 = [1;1;1];
-v2 = sameconv(x_rcd(:,iter-1),C1);
-fill3( [0,v1(1),v1(1)+v2(1),v2(1)] , [0,v1(2),v1(2)+v2(2),v2(2)] ,[0,v1(3),v1(3)+v2(3),v2(3)],'r','FaceAlpha',0.3, ...
-    'EdgeAlpha',0);
-grid on
-
-legend('x','convolution of x and C','bias','target Y','fitted y','plane of bias and convolution');
-title('Getting y of the 12 th iteration')
-view(3);
-xlim([0 3]);
-ylim([0 6]);
-zlim([0 5]);
-%%
-
-% Show getting y from x and constant
-iter = 91;
-figure
-hold on
-
-% old y
-temp = y_rcd(:,iter);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'bo-','linewidth',1.5);
-
-% convolution with old y
-temp = sameconv(y_rcd(:,iter),C1);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'c*-','linewidth',1.5);
-
-% constant
-temp = [1;1;1];
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'g*-','linewidth',1.5);
-
-% target X
-temp = X;
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'kx-','linewidth',1.5);
-
-% new x
-temp = x_rcd(:,iter);
-plot3([0,temp(1)],[0,temp(2)],[0,temp(3)],'ro-','linewidth',1.5);
-
-v1 = [1;1;1];
-v2 = sameconv(y_rcd(:,iter),C1);
-fill3( [0,v1(1),v1(1)+v2(1),v2(1)] , [0,v1(2),v1(2)+v2(2),v2(2)] ,[0,v1(3),v1(3)+v2(3),v2(3)],'r','FaceAlpha',0.3, ...
-    'EdgeAlpha',0);
-grid on
-
-legend('y','convolution of y and C','bias','target X','fitted x','plane of bias and convolution');
-title('Getting x of the 12 th iteration')
-view(3);
-xlim([0 3]);
-ylim([0 6]);
-zlim([0 5]);
-
+    G = ifft(sum(fft(A,nn).*fft(B,nn),2));
+    G = G(1:am,:);
+end
