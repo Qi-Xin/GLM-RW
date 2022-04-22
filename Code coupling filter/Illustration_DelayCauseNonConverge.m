@@ -2,7 +2,7 @@
 % delay is responsible for it. 
 
 clearvars;
-addpath(genpath('D:/code'))
+addpath(genpath('D:/github/GLM-RW'))
 X = [0.7;5;0.6];
 Y = [2;1;4.5];
 C1 = [1];
