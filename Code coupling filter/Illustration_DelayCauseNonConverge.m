@@ -23,24 +23,12 @@ for iter = 1:max_iter
     y = sameconv(x,C1)*tempy(2)+tempy(1);
     y_rcd(:,iter) = y;
     
-    text1 = ['After doing iteration ',num2str(iter),', optimizing over \beta_2 and k_12, we get'];
-    disp(text1)
-    text2 = 'log lambda_2 =';
-	disp(text2)
-    expy = exp(y');
-    disp([num2str(expy(1),'%4.2f'),',',num2str(expy(2),'%4.2f'),',',num2str(expy(3),'%4.2f'),',',num2str(expy(4),'%4.2f')])
     para_rcd(:,2*iter-1) = [tempy;tempx];
     
     tempx = glmfit([sameconv(y,C1)],X,'poisson');
     x = sameconv(y,C1)*tempx(2)+tempx(1);
     x_rcd(:,iter) = x;
     
-    text1 = ['After doing iteration ',num2str(iter),', optimizing over \beta_1 and k_21, we get'];
-    disp(text1)
-    text2 = 'log lambda_1 =';
-	disp(text2)
-    expx = exp(x');
-    disp([num2str(expx(1),'%4.2f'),',',num2str(expx(2),'%4.2f'),',',num2str(expx(3),'%4.2f'),',',num2str(expx(4),'%4.2f')])
     para_rcd(:,2*iter) = [tempy;tempx];
 
 end
